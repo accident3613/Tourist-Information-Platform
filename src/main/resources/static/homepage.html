@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页 - Kastools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #2d2d2d; /* 暗灰色背景 */
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: #3a3a3a;
+            color: #4CAF50;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #4a4a4a;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .content {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .content h2 {
+            color: #4CAF50;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        .content p {
+            color: #b0b0b0;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .category {
+            margin-bottom: 40px;
+            width: 100%;
+        }
+
+        .category h3 {
+            color: #e0e0e0;
+            margin-bottom: 20px;
+            font-size: 18px;
+            border-bottom: 1px solid #4a4a4a;
+            padding-bottom: 10px;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            width: 100%;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #444;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #555;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Kastools </h1>
+    </div>
+    <div class="content">
+        <h2>xdj莫宫我咯</h2>
+
+        <!-- 工具类分类 -->
+        <div class="category">
+            <h3>工具类</h3>
+            <div class="btn-grid">
+                <button class="btn btn-primary" onclick="window.location.href='/upload.html'">文件上传</button>
+                <!-- 这里可以添加更多工具类按钮 -->
+            </div>
+        </div>
+        
+        <!-- 系统类分类 -->
+        <div class="category">
+            <h3>系统</h3>
+            <div class="btn-grid">
+                <button class="btn btn-secondary" onclick="logout()">退出登录</button>
+                <!-- 这里可以添加更多系统类按钮 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 检查是否有登录状态
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // 如果没有token，重定向到登录页面
+                window.location.href = '/login.html';
+            }
+        };
+
+        // 退出登录函数
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        }
+
+        // 带token的API请求示例
+        function testApi() {
+            const token = localStorage.getItem('token');
+            fetch('/api/test', {
+                method: 'GET',
+                headers: {
+                    'token': token,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('API请求失败');
+                }
+                return response.text();
+            })
+            .then(data => {
+                alert('API请求成功: ' + data);
+            })
+            .catch(error => {
+                alert('API请求失败: ' + error.message);
+            });
+        }
+    </script>
+</body>
+</html>

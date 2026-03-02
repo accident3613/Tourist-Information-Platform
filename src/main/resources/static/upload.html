@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件上传 - Kastools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #2d2d2d; /* 暗灰色背景 */
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            color: #b0b0b0;
+        }
+
+        .upload-container {
+            background-color: #3a3a3a;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            padding: 60px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            border: 1px solid #4a4a4a;
+        }
+
+        .upload-area {
+            border: 3px dashed #4a4a4a;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #4CAF50;
+            background-color: rgba(76, 175, 80, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 64px;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #888;
+        }
+
+        #fileInput {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .btn-upload {
+            width: 100%;
+            padding: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .btn-upload:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-upload:active {
+            transform: translateY(0);
+        }
+
+        .btn-upload:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .file-info {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #333;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .file-info h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #4CAF50;
+        }
+
+        .file-info p {
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #b0b0b0;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .message.success {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+        }
+
+        .message.error {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+            border: 1px solid #f44336;
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #444;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #4CAF50;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: #b0b0b0;
+            text-align: center;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .nav-buttons {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background-color: #444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>文件上传</h1>
+        <p>上传文件到 Kastools 系统</p>
+    </div>
+    
+    <div class="upload-container">
+        <form id="uploadForm">
+            <div class="upload-area">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">点击或拖拽文件到此处</div>
+                <div class="upload-hint">支持所有文件类型，最大 2GB</div>
+                <input type="file" id="fileInput" name="file" onchange="updateFileInfo(this.files[0])">
+            </div>
+            
+            <div id="fileInfo" class="file-info" style="display: none;">
+                <h3>文件信息</h3>
+                <p><strong>文件名:</strong> <span id="fileName">-</span></p>
+                <p><strong>文件大小:</strong> <span id="fileSize">-</span></p>
+                <p><strong>文件类型:</strong> <span id="fileType">-</span></p>
+            </div>
+            
+            <button type="submit" class="btn-upload" id="uploadBtn">
+                <span id="uploadText">上传文件</span>
+                <span id="uploadLoading" class="loading" style="display: none;"></span>
+            </button>
+            
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">0%</div>
+            </div>
+            
+            <div id="message" class="message" style="display: none;"></div>
+        </form>
+    </div>
+    
+    <div class="nav-buttons">
+        <button class="nav-btn" onclick="window.location.href='/login.html'">返回登录</button>
+        <button class="nav-btn" onclick="window.location.href='/homepage.html'">返回首页</button>
+    </div>
+
+    <script>
+        let selectedFile = null;
+
+        // 检查是否有登录状态
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // 如果没有token，重定向到登录页面
+                window.location.href = '/login.html';
+            }
+        };
+
+        // 更新文件信息
+        function updateFileInfo(file) {
+            if (file) {
+                selectedFile = file;
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent = formatFileSize(file.size);
+                document.getElementById('fileType').textContent = file.type || '未知';
+                document.getElementById('fileInfo').style.display = 'block';
+                document.getElementById('uploadBtn').disabled = false;
+            }
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 表单提交处理
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!selectedFile) {
+                showMessage('请选择要上传的文件', 'error');
+                return;
+            }
+
+            const uploadText = document.getElementById('uploadText');
+            const uploadLoading = document.getElementById('uploadLoading');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            // 显示加载状态和进度条
+            uploadText.style.display = 'none';
+            uploadLoading.style.display = 'inline-block';
+            uploadBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
+            progressText.textContent = '0%';
+
+            // 创建 FormData 对象
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            // 获取token
+            const token = localStorage.getItem('token');
+            
+            // 使用XMLHttpRequest发送上传请求（支持进度监听）
+            const xhr = new XMLHttpRequest();
+            
+            // 监听上传进度
+            xhr.upload.addEventListener('progress', function(event) {
+                if (event.lengthComputable) {
+                    const percentComplete = Math.round((event.loaded / event.total) * 100);
+                    progressFill.style.width = percentComplete + '%';
+                    progressText.textContent = percentComplete + '%';
+                }
+            });
+            
+            // 监听请求完成
+            xhr.addEventListener('load', function() {
+                // 恢复按钮状态
+                uploadText.style.display = 'inline';
+                uploadLoading.style.display = 'none';
+                uploadBtn.disabled = false;
+                
+                // 隐藏进度条
+                progressContainer.style.display = 'none';
+
+                // 显示响应信息
+                if (xhr.status === 200) {
+                    // 检查响应是否为false（未登录）
+                    if (xhr.responseText === 'false') {
+                        // 弹出未登录提示框
+                        alert('未登录或登录已过期，请重新登录');
+                        // 跳转到登录界面
+                        window.location.href = '/login.html';
+                    } else {
+                        showMessage(xhr.responseText, 'success');
+                        
+                        // 重置表单
+                        setTimeout(() => {
+                            document.getElementById('fileInput').value = '';
+                            document.getElementById('fileInfo').style.display = 'none';
+                            selectedFile = null;
+                        }, 2000);
+                    }
+                } else {
+                    showMessage('上传失败: HTTP ' + xhr.status, 'error');
+                }
+            });
+            
+            // 监听网络错误
+            xhr.addEventListener('error', function() {
+                // 恢复按钮状态
+                uploadText.style.display = 'inline';
+                uploadLoading.style.display = 'none';
+                uploadBtn.disabled = false;
+                
+                // 隐藏进度条
+                progressContainer.style.display = 'none';
+
+                // 显示错误信息
+                showMessage('上传失败: 网络错误', 'error');
+                console.error('上传请求失败: 网络错误');
+            });
+            
+            // 监听请求超时
+            xhr.addEventListener('timeout', function() {
+                // 恢复按钮状态
+                uploadText.style.display = 'inline';
+                uploadLoading.style.display = 'none';
+                uploadBtn.disabled = false;
+                
+                // 隐藏进度条
+                progressContainer.style.display = 'none';
+
+                // 显示错误信息
+                showMessage('上传失败: 请求超时', 'error');
+                console.error('上传请求失败: 请求超时');
+            });
+            
+            // 配置并发送请求
+            xhr.open('POST', '/upload');
+            xhr.setRequestHeader('token', token);
+            xhr.send(formData);
+        });
+
+        // 显示消息
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = 'message ' + type;
+            messageDiv.style.display = 'block';
+
+            // 3秒后隐藏消息
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // 拖拽功能
+        const uploadArea = document.querySelector('.upload-area');
+
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#4CAF50';
+            this.style.backgroundColor = 'rgba(76, 175, 80, 0.1)';
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#4a4a4a';
+            this.style.backgroundColor = 'transparent';
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#4a4a4a';
+            this.style.backgroundColor = 'transparent';
+
+            if (e.dataTransfer.files.length > 0) {
+                selectedFile = e.dataTransfer.files[0];
+                document.getElementById('fileInput').files = e.dataTransfer.files;
+                updateFileInfo(selectedFile);
+            }
+        });
+    </script>
+</body>
+</html>
