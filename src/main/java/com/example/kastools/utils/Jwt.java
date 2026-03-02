@@ -2,9 +2,11 @@ package com.example.kastools.utils;
 
 import com.example.kastools.entity.User;
 import com.example.kastools.properties.Jwtpro;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -18,7 +20,7 @@ public class Jwt {
     public String create(User user){
         Map<String, Object> claims = new HashMap<>();
 claims.put("username",user.getUsername());
-
+claims.put("icon",user.getIcon());
 
         SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 
@@ -35,6 +37,15 @@ claims.put("username",user.getUsername());
                 // 设置过期时间
                 .setExpiration(exp);
         return builder.compact();
+    }
+    public String getusn(String token){
+        Claims claims = Jwts.parser()
+                .setSigningKey(Keys.hmacShaKeyFor(Jwtpro.secret_key.getBytes()))
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        String username= (String) claims.get("username");
+        return  username;
     }
 
 }

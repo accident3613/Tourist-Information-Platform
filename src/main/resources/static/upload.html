@@ -335,6 +335,15 @@
             // 获取token
             const token = localStorage.getItem('token');
             
+            // 检查token是否存在
+            if (!token) {
+                alert('未登录或登录已过期，请重新登录');
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            console.log('上传请求token:', token);
+            
             // 使用XMLHttpRequest发送上传请求（支持进度监听）
             const xhr = new XMLHttpRequest();
             
@@ -359,22 +368,18 @@
 
                 // 显示响应信息
                 if (xhr.status === 200) {
-                    // 检查响应是否为false（未登录）
-                    if (xhr.responseText === 'false') {
-                        // 弹出未登录提示框
-                        alert('未登录或登录已过期，请重新登录');
-                        // 跳转到登录界面
-                        window.location.href = '/login.html';
-                    } else {
-                        showMessage(xhr.responseText, 'success');
-                        
-                        // 重置表单
-                        setTimeout(() => {
-                            document.getElementById('fileInput').value = '';
-                            document.getElementById('fileInfo').style.display = 'none';
-                            selectedFile = null;
-                        }, 2000);
-                    }
+                    showMessage(xhr.responseText, 'success');
+                    
+                    // 重置表单
+                    setTimeout(() => {
+                        document.getElementById('fileInput').value = '';
+                        document.getElementById('fileInfo').style.display = 'none';
+                        selectedFile = null;
+                    }, 2000);
+                } else if (xhr.status === 401 && xhr.responseText === 'false') {
+                    // 拦截器返回的未登录响应
+                    alert('未登录或登录已过期，请重新登录');
+                    window.location.href = '/login.html';
                 } else {
                     showMessage('上传失败: HTTP ' + xhr.status, 'error');
                 }

@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f5f5dc; /* 卡其色背景 */
+            background-color: #f5f5dc;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -35,14 +35,14 @@
         }
 
         .login-header h2 {
-            color: #8B7355; /* 深卡其色 */
+            color: #8B7355;
             font-size: 28px;
             font-weight: 600;
             margin-bottom: 10px;
         }
 
         .login-header p {
-            color: #A0957E; /* 浅卡其色 */
+            color: #A0957E;
             font-size: 14px;
         }
 
@@ -102,6 +102,13 @@
             text-align: center;
         }
 
+        .success-message {
+            color: #27ae60;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
         .loading {
             display: inline-block;
             width: 20px;
@@ -115,47 +122,125 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        .toggle-form {
+            text-align: center;
+            margin-top: 20px;
+            color: #8B7355;
+            font-size: 14px;
+        }
+
+        .toggle-form a {
+            color: #8B7355;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .toggle-form a:hover {
+            text-decoration: underline;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="login-container">
         <div class="login-header">
-            <h2>欢迎登录</h2>
-            <p>请输入您的用户名和密码</p>
+            <h2 id="formTitle">欢迎登录</h2>
+            <p id="formSubtitle">请输入您的用户名和密码</p>
         </div>
+        
+        <!-- 登录表单 -->
         <form id="loginForm">
             <div class="form-group">
-                <label for="username">用户名</label>
-                <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+                <label for="loginUsername">用户名</label>
+                <input type="text" id="loginUsername" name="username" placeholder="请输入用户名" required>
             </div>
             <div class="form-group">
-                <label for="password">密码</label>
-                <input type="password" id="password" name="password" placeholder="请输入密码" required>
+                <label for="loginPassword">密码</label>
+                <input type="password" id="loginPassword" name="password" placeholder="请输入密码" required>
             </div>
             <button type="submit" class="btn-login">
                 <span id="loginText">登录</span>
                 <span id="loginLoading" class="loading" style="display: none;"></span>
             </button>
-            <div id="errorMessage" class="error-message"></div>
+            <div id="loginError" class="error-message"></div>
         </form>
+
+        <!-- 注册表单 -->
+        <form id="registerForm" class="hidden">
+            <div class="form-group">
+                <label for="registerUsername">用户名</label>
+                <input type="text" id="registerUsername" name="username" placeholder="请输入用户名" required>
+            </div>
+            <div class="form-group">
+                <label for="registerPassword">密码</label>
+                <input type="password" id="registerPassword" name="password" placeholder="请输入密码" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">确认密码</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="请再次输入密码" required>
+            </div>
+            <button type="submit" class="btn-login">
+                <span id="registerText">注册</span>
+                <span id="registerLoading" class="loading" style="display: none;"></span>
+            </button>
+            <div id="registerError" class="error-message"></div>
+            <div id="registerSuccess" class="success-message"></div>
+        </form>
+
+        <div class="toggle-form">
+            <span id="toggleText">还没有账号？</span>
+            <a id="toggleLink" onclick="toggleForm()">立即注册</a>
+        </div>
     </div>
 
     <script>
+        let isLoginForm = true;
+
+        function toggleForm() {
+            isLoginForm = !isLoginForm;
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const formTitle = document.getElementById('formTitle');
+            const formSubtitle = document.getElementById('formSubtitle');
+            const toggleText = document.getElementById('toggleText');
+            const toggleLink = document.getElementById('toggleLink');
+
+            if (isLoginForm) {
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                formTitle.textContent = '欢迎登录';
+                formSubtitle.textContent = '请输入您的用户名和密码';
+                toggleText.textContent = '还没有账号？';
+                toggleLink.textContent = '立即注册';
+            } else {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+                formTitle.textContent = '注册账号';
+                formSubtitle.textContent = '请填写以下信息完成注册';
+                toggleText.textContent = '已有账号？';
+                toggleLink.textContent = '立即登录';
+            }
+        }
+
+        // 登录表单提交
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
             const loginText = document.getElementById('loginText');
             const loginLoading = document.getElementById('loginLoading');
-            const errorMessage = document.getElementById('errorMessage');
+            const loginError = document.getElementById('loginError');
             
-            // 显示加载状态
             loginText.style.display = 'none';
             loginLoading.style.display = 'inline-block';
-            errorMessage.textContent = '';
+            loginError.textContent = '';
             
-            // 发送登录请求
             fetch('/user/login', {
                 method: 'POST',
                 headers: {
@@ -165,27 +250,75 @@
             })
             .then(response => response.json())
             .then(data => {
-                // 恢复登录按钮状态
                 loginText.style.display = 'inline';
                 loginLoading.style.display = 'none';
                 
                 if (data.code === 1) {
-                    // 登录成功，保存token并跳转到首页
                     localStorage.setItem('token', data.data);
                     window.location.href = '/homepage.html';
                 } else {
-                    // 登录失败，显示错误信息
-                    errorMessage.textContent = '用户名或密码错误';
+                    loginError.textContent = '用户名或密码错误';
                 }
             })
             .catch(error => {
-                // 恢复登录按钮状态
                 loginText.style.display = 'inline';
                 loginLoading.style.display = 'none';
-                
-                // 显示网络错误信息
-                errorMessage.textContent = '网络错误，请稍后重试';
+                loginError.textContent = '网络错误，请稍后重试';
                 console.error('登录请求失败:', error);
+            });
+        });
+
+        // 注册表单提交
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const registerText = document.getElementById('registerText');
+            const registerLoading = document.getElementById('registerLoading');
+            const registerError = document.getElementById('registerError');
+            const registerSuccess = document.getElementById('registerSuccess');
+            
+            registerError.textContent = '';
+            registerSuccess.textContent = '';
+            
+            if (password !== confirmPassword) {
+                registerError.textContent = '两次输入的密码不一致';
+                return;
+            }
+            
+            registerText.style.display = 'none';
+            registerLoading.style.display = 'inline-block';
+            
+            fetch('/user/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                registerText.style.display = 'inline';
+                registerLoading.style.display = 'none';
+                
+                if (data.code === 1) {
+                    registerSuccess.textContent = '注册成功！正在跳转到登录...';
+                    setTimeout(() => {
+                        toggleForm();
+                        document.getElementById('loginUsername').value = username;
+                        document.getElementById('loginPassword').value = '';
+                    }, 1500);
+                } else {
+                    registerError.textContent = data.data || '注册失败，请稍后重试';
+                }
+            })
+            .catch(error => {
+                registerText.style.display = 'inline';
+                registerLoading.style.display = 'none';
+                registerError.textContent = '网络错误，请稍后重试';
+                console.error('注册请求失败:', error);
             });
         });
     </script>

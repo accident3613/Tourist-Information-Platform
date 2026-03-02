@@ -24,14 +24,46 @@
             background-color: #3a3a3a;
             color: #4CAF50;
             padding: 20px;
-            text-align: center;
             border-bottom: 1px solid #4a4a4a;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
         }
 
         .header h1 {
             font-size: 28px;
             font-weight: 600;
+            margin: 0;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #4CAF50;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1);
+            border-color: #45a049;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-name {
+            color: #e0e0e0;
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .content {
@@ -114,6 +146,10 @@
 <body>
     <div class="header">
         <h1>Kastools </h1>
+        <div class="user-info">
+            <span class="user-name" id="userName">用户</span>
+            <img id="userAvatar" class="user-avatar" src="" alt="用户头像" onclick="goToProfile()">
+        </div>
     </div>
     <div class="content">
         <h2>xdj莫宫我咯</h2>
@@ -138,14 +174,92 @@
     </div>
 
     <script>
-        // 检查是否有登录状态
+        // 检查是否有登录状态并加载用户信息
         window.onload = function() {
             const token = localStorage.getItem('token');
             if (!token) {
                 // 如果没有token，重定向到登录页面
                 window.location.href = '/login.html';
+            } else {
+                // 加载用户信息
+                loadUserInfo();
             }
         };
+
+        // 加载用户信息
+        function loadUserInfo() {
+            const token = localStorage.getItem('token');
+            
+            fetch('/user/profile', {
+                method: 'GET',
+                headers: {
+                    'token': token
+                }
+            })
+            .then(response => {
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data) {
+                    // 显示用户名
+                    document.getElementById('userName').textContent = data.name || data.username || '用户';
+                    
+                    // 加载头像
+                    if (data.icon && data.icon.trim() !== '') {
+                        // 使用AJAX请求携带token获取头像
+                        loadAvatarWithToken(data.icon, 'userAvatar');
+                    } else {
+                        // 使用默认头像
+                        document.getElementById('userAvatar').src = '/icon/1.png';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('获取用户信息失败:', error);
+                // 加载失败时使用默认头像
+                document.getElementById('userAvatar').src = '/icon/1.png';
+            });
+        }
+
+        // 使用token加载头像
+        function loadAvatarWithToken(iconPath, avatarId) {
+            const token = localStorage.getItem('token');
+            // 从icon路径中提取文件名
+            const iconFileName = iconPath.split('/').pop();
+            
+            fetch('/icon?filePath=' + iconFileName, {
+                method: 'GET',
+                headers: {
+                    'token': token
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('头像加载失败');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // 创建Blob URL并设置为头像
+                const avatarUrl = URL.createObjectURL(blob);
+                document.getElementById(avatarId).src = avatarUrl;
+            })
+            .catch(error => {
+                console.error('加载头像失败:', error);
+                // 加载失败时使用默认头像
+                document.getElementById(avatarId).src = '/icon/1.png';
+            });
+        }
+
+        // 跳转到个人信息页面
+        function goToProfile() {
+            window.location.href = '/profile.html';
+        }
 
         // 退出登录函数
         function logout() {

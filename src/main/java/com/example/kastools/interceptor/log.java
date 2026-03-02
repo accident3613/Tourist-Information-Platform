@@ -41,6 +41,8 @@ public class log implements HandlerInterceptor {
             return true;
         } catch (Exception e) {
             System.out.println("拦截到未登录请求");
+            response.setStatus(401);
+            response.getWriter().write("false");
             return false;
         }
     }
