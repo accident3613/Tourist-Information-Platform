@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人信息 - Kastools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5dc;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h2 {
+            color: #8B7355;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .avatar-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .avatar-container {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #D2B48C;
+            transition: all 0.3s ease;
+        }
+
+        .avatar:hover {
+            border-color: #8B7355;
+            transform: scale(1.05);
+        }
+
+        .avatar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            color: white;
+            font-size: 14px;
+        }
+
+        .avatar-container:hover .avatar-overlay {
+            opacity: 1;
+        }
+
+        .avatar-input {
+            display: none;
+        }
+
+        .info-section {
+            margin-bottom: 30px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #8B7355;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #333;
+        }
+
+        .edit-btn {
+            background-color: #8B7355;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .edit-btn:hover {
+            background-color: #6B583F;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 12px;
+            background-color: #8B7355;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background-color: #6B583F;
+        }
+
+        .nav-btn.secondary {
+            background-color: #A0957E;
+        }
+
+        .nav-btn.secondary:hover {
+            background-color: #8B7355;
+        }
+
+        /* 编辑弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #8B7355;
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #8B7355;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #D2B48C;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #8B7355;
+            box-shadow: 0 0 0 2px rgba(139, 115, 85, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .modal-btn.primary {
+            background-color: #8B7355;
+            color: white;
+        }
+
+        .modal-btn.primary:hover {
+            background-color: #6B583F;
+        }
+
+        .modal-btn.secondary {
+            background-color: #eee;
+            color: #333;
+        }
+
+        .modal-btn.secondary:hover {
+            background-color: #ddd;
+        }
+
+        .message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .message.success {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: #27ae60;
+        }
+
+        .message.error {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>个人信息</h2>
+        </div>
+
+        <div class="avatar-section">
+            <div class="avatar-container" onclick="document.getElementById('avatarInput').click()">
+                <img id="avatarImg" src="" alt="头像" class="avatar">
+                <div class="avatar-overlay">点击更换头像</div>
+            </div>
+            <input type="file" id="avatarInput" class="avatar-input" accept="image/*" onchange="uploadAvatar(this)">
+        </div>
+
+        <div class="info-section">
+            <div class="info-item">
+                <span class="info-label">用户名</span>
+                <span id="username" class="info-value">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">昵称</span>
+                <div>
+                    <span id="nickname" class="info-value">-</span>
+                    <button class="edit-btn" onclick="openNameModal()">修改</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn secondary" onclick="window.location.href='/homepage.html'">返回首页</button>
+            <button class="nav-btn" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <!-- 修改昵称弹窗 -->
+    <div id="nameModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>修改昵称</h3>
+            </div>
+            <div class="form-group">
+                <label for="newName">新昵称</label>
+                <input type="text" id="newName" placeholder="请输入新昵称">
+            </div>
+            <div id="nameMessage" class="message" style="display: none;"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeNameModal()">取消</button>
+                <button class="modal-btn primary" onclick="updateName()">
+                    <span id="saveText">保存</span>
+                    <span id="saveLoading" class="loading" style="display: none;"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载时获取用户信息
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+            loadUserProfile();
+        };
+
+        // 使用token加载头像
+        function loadAvatarWithToken(iconPath) {
+            const token = localStorage.getItem('token');
+            // 从icon路径中提取文件名
+            const iconFileName = iconPath.split('/').pop();
+            
+            fetch('/icon?filePath=' + iconFileName, {
+                method: 'GET',
+                headers: {
+                    'token': token
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('头像加载失败');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // 创建Blob URL并设置为头像
+                const avatarUrl = URL.createObjectURL(blob);
+                document.getElementById('avatarImg').src = avatarUrl;
+            })
+            .catch(error => {
+                console.error('加载头像失败:', error);
+                // 加载失败时使用默认头像
+                document.getElementById('avatarImg').src = '/icon/1.png';
+            });
+        }
+
+        // 加载用户信息
+        function loadUserProfile() {
+            const token = localStorage.getItem('token');
+            
+            fetch('/user/profile', {
+                method: 'GET',
+                headers: {
+                    'token': token
+                }
+            })
+            .then(response => {
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data) {
+                    document.getElementById('username').textContent = data.username || '-';
+                    document.getElementById('nickname').textContent = data.name || data.username || '-';
+                    
+                    // 加载头像 - 先检查icon路径是否为空
+                    if (data.icon && data.icon.trim() !== '') {
+                        // icon路径不为空，使用用户头像
+                        loadAvatarWithToken(data.icon);
+                    } else {
+                        // icon路径为空，使用默认头像
+                        document.getElementById('avatarImg').src = '/icon/1.png';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('获取用户信息失败:', error);
+            });
+        }
+
+        // 上传头像
+        function uploadAvatar(input) {
+            if (!input.files || input.files.length === 0) {
+                return;
+            }
+
+            const file = input.files[0];
+            const token = localStorage.getItem('token');
+            
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                headers: {
+                    'token': token
+                },
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                if (data === 'false') {
+                    alert('未登录或登录已过期，请重新登录');
+                    window.location.href = '/login.html';
+                } else if (data.includes('successfully')) {
+                    // 上传成功后，重新请求profile获取最新头像文件名，然后使用token加载
+                    fetch('/user/profile', {
+                        method: 'GET',
+                        headers: {
+                            'token': token
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(userData => {
+                        if (userData && userData.icon) {
+                            loadAvatarWithToken(userData.icon);
+                            alert('头像上传成功！');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('获取最新头像失败:', error);
+                        alert('头像上传成功！');
+                    });
+                } else {
+                    alert('上传失败: ' + data);
+                }
+            })
+            .catch(error => {
+                console.error('上传头像失败:', error);
+                alert('上传失败，请稍后重试');
+            });
+        }
+
+        // 打开修改昵称弹窗
+        function openNameModal() {
+            const currentName = document.getElementById('nickname').textContent;
+            document.getElementById('newName').value = currentName === '-' ? '' : currentName;
+            document.getElementById('nameModal').style.display = 'flex';
+            document.getElementById('nameMessage').style.display = 'none';
+        }
+
+        // 关闭修改昵称弹窗
+        function closeNameModal() {
+            document.getElementById('nameModal').style.display = 'none';
+        }
+
+        // 更新昵称
+        function updateName() {
+            const newName = document.getElementById('newName').value.trim();
+            const nameMessage = document.getElementById('nameMessage');
+            const saveText = document.getElementById('saveText');
+            const saveLoading = document.getElementById('saveLoading');
+            
+            if (!newName) {
+                nameMessage.textContent = '请输入新昵称';
+                nameMessage.className = 'message error';
+                nameMessage.style.display = 'block';
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            
+            saveText.style.display = 'none';
+            saveLoading.style.display = 'inline-block';
+            nameMessage.style.display = 'none';
+
+            fetch('/user/update-name?name=' + encodeURIComponent(newName), {
+                method: 'PUT',
+                headers: {
+                    'token': token
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                saveText.style.display = 'inline';
+                saveLoading.style.display = 'none';
+                
+                if (data.code === 1) {
+                    nameMessage.textContent = '修改成功！';
+                    nameMessage.className = 'message success';
+                    nameMessage.style.display = 'block';
+                    
+                    // 更新页面显示
+                    document.getElementById('nickname').textContent = newName;
+                    
+                    // 关闭弹窗
+                    setTimeout(() => {
+                        closeNameModal();
+                    }, 1500);
+                } else {
+                    nameMessage.textContent = data.data || '修改失败';
+                    nameMessage.className = 'message error';
+                    nameMessage.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                saveText.style.display = 'inline';
+                saveLoading.style.display = 'none';
+                nameMessage.textContent = '网络错误，请稍后重试';
+                nameMessage.className = 'message error';
+                nameMessage.style.display = 'block';
+                console.error('修改昵称失败:', error);
+            });
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        }
+
+        // 点击弹窗外部关闭弹窗
+        window.onclick = function(event) {
+            const modal = document.getElementById('nameModal');
+            if (event.target === modal) {
+                closeNameModal();
+            }
+        }
+    </script>
+</body>
+</html>
