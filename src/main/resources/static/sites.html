@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
+    <title>探索世界 - 景点展示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 动态背景粒子 */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* 头部导航 */
+        .header {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: white;
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* 主标题 */
+        .hero-section {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        .hero-title {
+            font-size: 48px;
+            font-weight: 300;
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+            animation: fadeInUp 1s ease;
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 景点卡片容器 */
+        .sites-container {
+            position: relative;
+            z-index: 10;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .sites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        /* 景点卡片 */
+        .site-card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .site-card:hover {
+            transform: translateY(-15px) rotateX(5deg);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        .site-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s ease;
+            z-index: 10;
+        }
+
+        .site-card:hover::before {
+            left: 100%;
+        }
+
+        .site-image-container {
+            position: relative;
+            height: 220px;
+            overflow: hidden;
+        }
+
+        .site-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .site-card:hover .site-image {
+            transform: scale(1.1);
+        }
+
+        .site-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .site-card:hover .site-overlay {
+            opacity: 1;
+        }
+
+        .site-rating {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+        }
+
+        .site-info {
+            padding: 25px;
+            background: white;
+        }
+
+        .site-name {
+            font-size: 22px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .site-name::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .site-stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .collect-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            z-index: 20;
+        }
+
+        .collect-btn:hover {
+            transform: scale(1.1);
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .collect-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: #ccc;
+            transition: all 0.3s ease;
+        }
+
+        .collect-btn:hover svg {
+            fill: #ff6b6b;
+        }
+
+        .collect-btn.collected svg {
+            fill: #ff6b6b;
+        }
+
+        .site-stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .site-stat-icon {
+            width: 16px;
+            height: 16px;
+            fill: #667eea;
+        }
+
+        /* 分页控制 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 50px;
+            padding: 20px;
+        }
+
+        .page-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: white;
+            color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+            padding: 0 20px;
+        }
+
+        /* 加载动画 */
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 400px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 100px 20px;
+            color: white;
+        }
+
+        .empty-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-text {
+            font-size: 24px;
+            opacity: 0.8;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 32px;
+            }
+
+            .sites-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 15px 20px;
+            }
+
+            .nav-links {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 动态背景粒子 -->
+    <div class="particles" id="particles"></div>
+
+    <!-- 头部导航 -->
+    <header class="header">
+        <div class="logo">🌍 探索世界</div>
+        <nav class="nav-links">
+            <a href="/sites.html">首页</a>
+            <a href="/profile.html">个人中心</a>
+            <a href="#" onclick="logout()">退出</a>
+        </nav>
+    </header>
+
+    <!-- 主标题区 -->
+    <section class="hero-section">
+        <h1 class="hero-title">发现精彩景点</h1>
+        <p class="hero-subtitle">探索世界各地的美丽风景，开启您的旅程</p>
+    </section>
+
+    <!-- 景点展示区 -->
+    <div class="sites-container">
+        <div id="loading" class="loading-container">
+            <div class="loading-spinner"></div>
+        </div>
+        
+        <div id="sitesGrid" class="sites-grid" style="display: none;"></div>
+        
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-icon">🏞️</div>
+            <p class="empty-text">暂无更多景点</p>
+        </div>
+
+        <!-- 分页控制 -->
+        <div class="pagination" id="pagination" style="display: none;">
+            <button class="page-btn" id="prevBtn" onclick="changePage(-1)">
+                ← 上一页
+            </button>
+            <span class="page-info" id="pageInfo">第 1 页</span>
+            <button class="page-btn" id="nextBtn" onclick="changePage(1)">
+                下一页 →
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 0;
+        const pageSize = 5;
+        let isLoading = false;
+        let userCollections = []; // 存储用户收藏的景点ID
+
+        // 初始化页面
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            // 创建背景粒子
+            createParticles();
+            
+            // 先加载用户收藏列表，再加载景点
+            loadUserCollections().then(() => {
+                loadSites();
+            });
+        };
+
+        // 加载用户收藏列表
+        function loadUserCollections() {
+            const token = localStorage.getItem('token');
+            
+            return fetch('/user/colist', {
+                method: 'POST',
+                headers: {
+                    'token': token,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.status === 401 || response.status === 403) {
+                    return response.text().then(text => {
+                        if (text === '用户已在其他地方登录') {
+                            alert('您的账号已在其他地方登录，请重新登录');
+                        }
+                        localStorage.removeItem('token');
+                        window.location.href = '/login.html';
+                        return null;
+                    });
+                }
+                return response.json();
+            })
+            .then(collections => {
+                if (collections) {
+                    userCollections = collections;
+                    console.log('用户收藏列表:', userCollections);
+                }
+            })
+            .catch(error => {
+                console.error('获取收藏列表失败:', error);
+            });
+        }
+
+        // 创建动态背景粒子
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // 加载景点列表
+        function loadSites() {
+            if (isLoading) return;
+            isLoading = true;
+
+            const token = localStorage.getItem('token');
+            const loading = document.getElementById('loading');
+            const sitesGrid = document.getElementById('sitesGrid');
+            const pagination = document.getElementById('pagination');
+
+            loading.style.display = 'flex';
+            sitesGrid.style.display = 'none';
+            pagination.style.display = 'none';
+
+            fetch(`/site/list?start=${currentPage * pageSize}`, {
+                method: 'GET',
+                headers: {
+                    'token': token
+                }
+            })
+            .then(response => {
+                if (response.status === 401 || response.status === 403) {
+                    return response.text().then(text => {
+                        if (text === '用户已在其他地方登录') {
+                            alert('您的账号已在其他地方登录，请重新登录');
+                        }
+                        localStorage.removeItem('token');
+                        window.location.href = '/login.html';
+                        return null;
+                    });
+                }
+                return response.json();
+            })
+            .then(sites => {
+                loading.style.display = 'none';
+                
+                if (!sites || sites.length === 0) {
+                    if (currentPage === 0) {
+                        document.getElementById('emptyState').style.display = 'block';
+                    }
+                    document.getElementById('nextBtn').disabled = true;
+                    return;
+                }
+
+                displaySites(sites, token);
+                sitesGrid.style.display = 'grid';
+                pagination.style.display = 'flex';
+                
+                // 更新分页按钮状态
+                document.getElementById('prevBtn').disabled = currentPage === 0;
+                document.getElementById('nextBtn').disabled = sites.length < pageSize;
+                document.getElementById('pageInfo').textContent = `第 ${currentPage + 1} 页`;
+            })
+            .catch(error => {
+                console.error('加载景点失败:', error);
+                loading.style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+            })
+            .finally(() => {
+                isLoading = false;
+            });
+        }
+
+        // 显示景点卡片
+        function displaySites(sites, token) {
+            const sitesGrid = document.getElementById('sitesGrid');
+            
+            const cardsHTML = sites.map((site, index) => {
+                const iconFileName = site.icon ? site.icon.split('/').pop() : null;
+                // 检查该景点是否已收藏
+                const isCollected = userCollections.includes(site.id);
+                const collectedClass = isCollected ? 'collected' : '';
+                const btnTitle = isCollected ? '已收藏' : '添加收藏';
+                
+                return `
+                    <div class="site-card" style="animation: fadeInUp 0.6s ease ${index * 0.1}s both;" onclick="goToDetail(${site.id})">
+                        <div class="site-image-container">
+                            <button class="collect-btn ${collectedClass}" onclick="event.stopPropagation(); toggleCollection(${site.id}, this)" title="${btnTitle}">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                </svg>
+                            </button>
+                            <img class="site-image" 
+                                 data-icon="${iconFileName}" 
+                                 data-token="${token}"
+                                 src="/icon/1.png" 
+                                 alt="${site.name || '景点'}"
+                                 onclick="event.stopPropagation();">
+                            <div class="site-overlay"></div>
+                            <div class="site-rating">★ ${site.rating || '0.0'}</div>
+                        </div>
+                        <div class="site-info">
+                            <h3 class="site-name">${site.name || '未知景点'}</h3>
+                            <div class="site-stats">
+                                <div class="site-stat">
+                                    <svg class="site-stat-icon" viewBox="0 0 24 24">
+                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                    </svg>
+                                    <span>${site.arating || '0.0'}</span>
+                                </div>
+                                <div class="site-stat">
+                                    <svg class="site-stat-icon" viewBox="0 0 24 24">
+                                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                    </svg>
+                                    <span>${site.number || '0'} 浏览</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            sitesGrid.innerHTML = cardsHTML;
+            
+            // 加载所有景点图片
+            const images = sitesGrid.querySelectorAll('.site-image');
+            images.forEach(img => {
+                if (img.dataset.icon) {
+                    loadSiteImage(img);
+                }
+            });
+        }
+
+        // 加载景点图片（携带token）
+        function loadSiteImage(imgElement) {
+            const iconFileName = imgElement.dataset.icon;
+            const token = imgElement.dataset.token;
+            
+            if (!iconFileName) return;
+            
+            fetch(`/sicon?filePath=${iconFileName}`, {
+                method: 'GET',
+                headers: {
+                    'token': token
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('图片加载失败');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const imageUrl = URL.createObjectURL(blob);
+                imgElement.src = imageUrl;
+            })
+            .catch(error => {
+                console.error('加载景点图片失败:', error);
+                // 加载失败时保持默认图片
+            });
+        }
+
+        // 切换收藏状态（添加/取消）
+        function toggleCollection(siteId, btnElement) {
+            const token = localStorage.getItem('token');
+            const isCollected = btnElement.classList.contains('collected');
+            
+            if (isCollected) {
+                // 取消收藏
+                cancelCollection(siteId, btnElement, token);
+            } else {
+                // 添加收藏
+                addCollection(siteId, btnElement, token);
+            }
+        }
+
+        // 添加收藏
+        function addCollection(siteId, btnElement, token) {
+            fetch(`/user/coladd?site_id=${siteId}`, {
+                method: 'GET',
+                headers: {
+                    'token': token
+                }
+            })
+            .then(response => {
+                if (response.status === 401 || response.status === 403) {
+                    return response.text().then(text => {
+                        if (text === '用户已在其他地方登录') {
+                            alert('您的账号已在其他地方登录，请重新登录');
+                        } else {
+                            alert('未登录或登录已过期，请重新登录');
+                        }
+                        localStorage.removeItem('token');
+                        window.location.href = '/login.html';
+                        return null;
+                    });
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (result === null) return;
+                
+                if (result === true) {
+                    // 收藏成功
+                    btnElement.classList.add('collected');
+                    btnElement.title = '已收藏';
+                    // 更新本地收藏列表
+                    if (!userCollections.includes(siteId)) {
+                        userCollections.push(siteId);
+                    }
+                    alert('收藏成功！');
+                } else {
+                    alert('收藏失败，请稍后重试');
+                }
+            })
+            .catch(error => {
+                console.error('收藏失败:', error);
+                alert('收藏失败，请检查网络连接');
+            });
+        }
+
+        // 取消收藏
+        function cancelCollection(siteId, btnElement, token) {
+            if (!confirm('确定要取消收藏该景点吗？')) {
+                return;
+            }
+            
+            fetch(`/user/coldel?site_id=${siteId}`, {
+                method: 'GET',
+                headers: {
+                    'token': token
+                }
+            })
+            .then(response => {
+                if (response.status === 401 || response.status === 403) {
+                    return response.text().then(text => {
+                        if (text === '用户已在其他地方登录') {
+                            alert('您的账号已在其他地方登录，请重新登录');
+                        } else {
+                            alert('未登录或登录已过期，请重新登录');
+                        }
+                        localStorage.removeItem('token');
+                        window.location.href = '/login.html';
+                        return null;
+                    });
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (result === null) return;
+                
+                if (result === true) {
+                    // 取消收藏成功
+                    btnElement.classList.remove('collected');
+                    btnElement.title = '添加收藏';
+                    // 更新本地收藏列表
+                    const index = userCollections.indexOf(siteId);
+                    if (index > -1) {
+                        userCollections.splice(index, 1);
+                    }
+                    alert('已取消收藏！');
+                } else {
+                    alert('取消收藏失败，请稍后重试');
+                }
+            })
+            .catch(error => {
+                console.error('取消收藏失败:', error);
+                alert('取消收藏失败，请检查网络连接');
+            });
+        }
+
+        // 跳转到景点详情页
+        function goToDetail(siteId) {
+            window.location.href = `/site-detail.html?site_id=${siteId}`;
+        }
+
+        // 切换页面
+        function changePage(direction) {
+            currentPage += direction;
+            if (currentPage < 0) currentPage = 0;
+            loadSites();
+            // 滚动到页面顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 退出登录
+        function logout() {
+            const token = localStorage.getItem('token');
+            
+            // 调用后端登出接口
+            fetch('/user/logout', {
+                method: 'POST',
+                headers: {
+                    'token': token
+                }
+            })
+            .then(() => {
+                // 无论后端是否成功，都清除本地token并跳转
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            })
+            .catch(() => {
+                // 即使请求失败也清除本地token
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            });
+        }
+    </script>
+</body>
+</html>

@@ -21,7 +21,6 @@ public class Jwt {
         Map<String, Object> claims = new HashMap<>();
 claims.put("username",user.getUsername());
 claims.put("icon",user.getIcon());
-
         SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 
         // 生成JWT的时间+持续时间

@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文件上传 - Kastools</title>
+    <link rel="icon" href="data:,">
+    <title>文件上传</title> - Kastools</title>
     <style>
         * {
             margin: 0;
@@ -268,7 +269,7 @@
     
     <div class="nav-buttons">
         <button class="nav-btn" onclick="window.location.href='/login.html'">返回登录</button>
-        <button class="nav-btn" onclick="window.location.href='/homepage.html'">返回首页</button>
+        <button class="nav-btn" onclick="window.location.href='/sites.html'">返回首页</button>
     </div>
 
     <script>
@@ -376,9 +377,13 @@
                         document.getElementById('fileInfo').style.display = 'none';
                         selectedFile = null;
                     }, 2000);
-                } else if (xhr.status === 401 && xhr.responseText === 'false') {
+                } else if (xhr.status === 401) {
                     // 拦截器返回的未登录响应
-                    alert('未登录或登录已过期，请重新登录');
+                    if (xhr.responseText === '用户已在其他地方登录') {
+                        alert('您的账号已在其他地方登录，请重新登录');
+                    } else {
+                        alert('未登录或登录已过期，请重新登录');
+                    }
                     window.location.href = '/login.html';
                 } else {
                     showMessage('上传失败: HTTP ' + xhr.status, 'error');

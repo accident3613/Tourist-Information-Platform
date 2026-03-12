@@ -9,9 +9,12 @@ import java.io.Serializable;
 @AllArgsConstructor         //生成有参构造
 @NoArgsConstructor         //生成无参构造
 @Data
-public class User{
-    public String username;
-    public String password;
-    public String icon;
-    public Integer status;
+public class Site_list{
+    private int id;
+    private String name;
+    private float rating;
+    private String icon;
+    private float arating;
+    private int number;
+    private String description;
 }

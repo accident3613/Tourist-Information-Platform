@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
     <title>首页 - Kastools</title>
     <style>
         * {
@@ -198,9 +199,14 @@
             })
             .then(response => {
                 if (response.status === 401 || response.status === 403) {
-                    localStorage.removeItem('token');
-                    window.location.href = '/login.html';
-                    return;
+                    return response.text().then(text => {
+                        if (text === '用户已在其他地方登录') {
+                            alert('您的账号已在其他地方登录，请重新登录');
+                        }
+                        localStorage.removeItem('token');
+                        window.location.href = '/login.html';
+                        return null;
+                    });
                 }
                 return response.json();
             })
@@ -263,8 +269,25 @@
 
         // 退出登录函数
         function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/login.html';
+            const token = localStorage.getItem('token');
+            
+            // 调用后端登出接口
+            fetch('/user/logout', {
+                method: 'POST',
+                headers: {
+                    'token': token
+                }
+            })
+            .then(() => {
+                // 无论后端是否成功，都清除本地token并跳转
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            })
+            .catch(() => {
+                // 即使请求失败也清除本地token
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            });
         }
 
         // 带token的API请求示例
