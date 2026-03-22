@@ -12,12 +12,16 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @RestController()
@@ -33,15 +37,26 @@ public class UserC {
     StringRedisTemplate stringRedisTemplate;
     @Autowired
     UserProfile userProfile;
+    @Autowired
+    RedissonClient redissonClient;
     @PostMapping(value = "/login")
     public Result login(@RequestBody User user,HttpServletRequest request)
     {
-System.out.println(user.getUsername()+" "+user.getPassword());
-int code=usrMap.logmap(user.getUsername(),user.getPassword());
 String ip=request.getRemoteAddr();
 String data;
+System.out.println(user.getUsername()+" "+user.getPassword());
 Result result=new Result();
+String status=stringRedisTemplate.opsForValue().get("logstatus:"+user.getUsername());
+//如果用户状态为false，则说明用户不存在
+        if(status!=null)
+if(status.equals("false"))
+{
+result.setCode(0);
+return result;
+        }
+int code=usrMap.logmap(user.getUsername(),user.getPassword());
 result.setCode(code);
+
 if(code==1)
 {   usrMap.lggmap(1,user.getUsername());
     data= jwt.create(user);
@@ -49,8 +64,8 @@ if(code==1)
     stringRedisTemplate.opsForValue().set("login:"+user.getUsername(),"true",5, TimeUnit.MINUTES);
     stringRedisTemplate.opsForValue().set(user.getUsername()+"_user_ip",ip,2,TimeUnit.HOURS);
 }
-
-
+if(code==0)
+    stringRedisTemplate.opsForValue().set("logstatus:"+user.getUsername(),"false",10, TimeUnit.SECONDS);
 return result;
     }
 
@@ -110,15 +125,6 @@ else
     result.setCode(0);
 return result;
 }
-@PostMapping("/collect")   //添加收藏
-public boolean collect(int site_id,HttpServletRequest request)
-{
-    String token=request.getHeader("token");
-    String username= jwt.getusn(token);
-return usrMap.colmap(site_id,username);
-
-}
-
 
     @PostMapping("/colist")   //获取收藏列表
     public List<Integer> colist(HttpServletRequest request)
@@ -130,9 +136,29 @@ return usrMap.colmap(site_id,username);
 
     @GetMapping("/coladd")
     public boolean coladd(HttpServletRequest request,@RequestParam("site_id") int site_id)
-    {String token=request.getHeader("token");
-        String username= jwt.getusn(token);
-        return siteMap.col_add(username,site_id);
+    {RLock lock= redissonClient.getLock("coladd");
+        boolean status=false;
+        boolean islock=false;
+        try{
+            String username;
+            String token=request.getHeader("token");
+            username= jwt.getusn(token);
+            islock=lock.tryLock(2, 10, TimeUnit.SECONDS);  //最多等2s，最多持有10s
+            status=usrMap.colmap(site_id,username);
+
+        }
+        catch(Exception e)
+        {System.out.println("重复点击收藏");
+        }
+        finally{
+            try{
+                lock.unlock();
+            }
+            catch (Exception e)
+            {System.out.println(e.getMessage());}
+        }
+
+        return status;
     }
     @GetMapping("/coldel")
     public boolean coldel(HttpServletRequest request,@RequestParam("site_id") int site_id)

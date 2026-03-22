@@ -17,7 +17,7 @@ public class Site {
     SiteMap siteMap;
 @Cacheable(value = "site_list",key = "#start")
 @GetMapping("/list")   //获取景点列表
-    public List<Site_list> list(@RequestParam("start") int start){
+    public List<Site_list> list(@RequestParam("start") int start)       {
 
 List<Site_list> list=siteMap.list(start);
 return list;

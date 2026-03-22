@@ -1,5 +1,8 @@
 package com.example.kastools.config;
 
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,21 +52,32 @@ public class RedisConf {
                        // .fromSerializer(new StringRedisSerializer()))
                 // Value 序列化为 JSON
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new GenericJackson2JsonRedisSerializer()))
+                .fromSerializer(new GenericJackson2JsonRedisSerializer()));
                 // 不缓存 null 值
-                .disableCachingNullValues();
+                //.disableCachingNullValues();
         //单独配置不同键的过期时间
         Map<String, RedisCacheConfiguration> configMap = new HashMap<>();
         configMap.put("site_list", RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(10)));
+                .entryTtl(Duration.ofMinutes(10))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                .fromSerializer(new GenericJackson2JsonRedisSerializer())));
+
         // user 缓存 1 小时
-        configMap.put("useruser_profile", RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofHours(1)));
+        configMap.put("user_profile", RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofHours(1))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                .fromSerializer(new GenericJackson2JsonRedisSerializer())));
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(config)
                 .withInitialCacheConfigurations(configMap)
                 .build();
-
-
     }
+    @Bean
+    public RedissonClient redissonClient(){
+        Config config= new Config();
+        config.useSingleServer().setAddress("redis://127.0.0.1:6379");
+        return Redisson.create(config);
+    }
+
+
 }

@@ -14,4 +14,5 @@ public class User{
     public String password;
     public String icon;
     public Integer status;
+    public String name;
 }
