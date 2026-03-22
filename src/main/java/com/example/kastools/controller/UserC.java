@@ -111,13 +111,22 @@ String username= jwt.getusn(token);
 
 }
 @PutMapping("/update-name")
-public Result name(String name,HttpServletRequest request)
-{
-Result result=new Result();
+public Result name(String name,HttpServletRequest request) throws InterruptedException {
+        RLock lock=redissonClient.getLock("upname");
+    boolean status=false;
+    Result result=new Result();
+    try{boolean islock=lock.tryLock(2,5,TimeUnit.SECONDS);
 String token=request.getHeader("token");
 String username= jwt.getusn(token);
-boolean status=usrMap.upnmap(name,username);
-if(status)
+status=usrMap.upnmap(name,username);}
+    finally {
+        try {
+            lock.unlock();
+        } catch (Exception e) {
+            System.out.println("无事发生");
+        }
+    }
+    if(status)
 {result.setCode(1);
 result.setData("更新成功");
 }
