@@ -33,4 +33,8 @@ public interface UsrMap {
 
     @Select("SELECT site_id FROM collections WHERE username = #{username}")
     List<Integer> clsmap(String username);
+
+    @Select("Select COUNT(*) FROM collections WHERE username = #{username} and site_id = #{site_id}")
+    int chkcol(String username,int site_id);
+
 }

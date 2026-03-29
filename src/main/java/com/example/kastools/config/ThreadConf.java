@@ -22,5 +22,4 @@ executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 executor.initialize();
 return executor;
     }
-
 }

@@ -153,6 +153,7 @@ return result;
             String token=request.getHeader("token");
             username= jwt.getusn(token);
             islock=lock.tryLock(2, 10, TimeUnit.SECONDS);  //最多等2s，最多持有10s
+            if(usrMap.chkcol(username,site_id)!=0)
             status=usrMap.colmap(site_id,username);
 
         }

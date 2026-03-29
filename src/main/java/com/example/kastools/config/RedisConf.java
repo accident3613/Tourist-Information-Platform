@@ -35,7 +35,7 @@ public class RedisConf {
         GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer();
         redisTemplate.setValueSerializer(jsonSerializer);
         redisTemplate.setHashValueSerializer(jsonSerializer);
-
+        //验证配置是否正确
         redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }

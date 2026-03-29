@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class SiteIcon {
     private int site_id;
     private  String image_path;
+
 }

@@ -100,7 +100,6 @@ String username= jwt.getusn(token);
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"")
                 .body(resource);
     }
-
     @Async("pool")
     public CompletableFuture<String>  asupload(String username,MultipartFile file) throws IOException {
         // 使用相对路径
