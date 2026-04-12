@@ -89,23 +89,6 @@ CREATE TABLE IF NOT EXISTS order_item (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单明细表';
 
 -- --------------------------------------------
--- 5. 支付记录表 (payment) - 可选，用于记录支付流水
--- --------------------------------------------
-CREATE TABLE IF NOT EXISTS payment (
-    id INT PRIMARY KEY AUTO_INCREMENT COMMENT '支付记录ID',
-    order_no VARCHAR(64) NOT NULL COMMENT '订单编号',
-    pay_no VARCHAR(128) DEFAULT NULL COMMENT '第三方支付流水号',
-    amount DECIMAL(10, 2) NOT NULL COMMENT '支付金额',
-    pay_type TINYINT NOT NULL COMMENT '支付方式：1-支付宝，2-微信，3-余额',
-    status TINYINT DEFAULT 0 COMMENT '支付状态：0-支付中，1-支付成功，2-支付失败',
-    pay_time DATETIME DEFAULT NULL COMMENT '支付完成时间',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    INDEX idx_order_no (order_no),
-    INDEX idx_pay_no (pay_no),
-    FOREIGN KEY (order_no) REFERENCES orders(order_no) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='支付记录表';
-
--- --------------------------------------------
 -- 初始化数据示例（可选）
 -- --------------------------------------------
 
