@@ -38,6 +38,7 @@ public class log_IC implements HandlerInterceptor {
             System.out.println("错误处理请求，直接放行");
             return true;
         }
+
 /*
 // 强制转换为
  HandlerMethod HandlerMethod handlerMethod = (HandlerMethod) handler;
