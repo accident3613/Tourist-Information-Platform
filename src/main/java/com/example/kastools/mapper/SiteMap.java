@@ -5,6 +5,7 @@ import com.example.kastools.entity.Site_list;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
@@ -26,5 +27,10 @@ public interface SiteMap {
     @Select("SELECT * FROM site WHERE site_id = #{site_id}")    //获取景点照片
     List<SiteIcon> siteicon(int site_id);
 
+    @Select("SELECT * FROM site_list WHERE name LIKE CONCAT('%', #{keyword}, '%') LIMIT #{start},5")
+    List<Site_list> searchByName(@Param("keyword") String keyword, @Param("start") int start);
+
+    @Select("SELECT COUNT(*) FROM site_list WHERE name LIKE CONCAT('%', #{keyword}, '%')")
+    int countByKeyword(@Param("keyword") String keyword);
 
 }

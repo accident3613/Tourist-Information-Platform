@@ -12,4 +12,8 @@ public interface SiteService {
     Site_list getSiteById(int siteId);
 
     List<SiteIcon> getSiteIcons(int siteId);
+
+    List<Site_list> searchSites(String keyword, int start);
+
+    int countSearchSites(String keyword);
 }

@@ -1,0 +1,240 @@
+<!-- 订单管理页面 -->
+<div class="content-card">
+    <div class="card-header">
+        <h3 class="card-title">订单列表</h3>
+        <div style="display: flex; gap: 10px;">
+            <select id="statusFilter" onchange="loadOrders()" style="padding: 8px 12px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;">
+                <option value="">全部状态</option>
+                <option value="pending">待支付</option>
+                <option value="confirmed">已确认</option>
+                <option value="completed">已完成</option>
+                <option value="cancelled">已取消</option>
+            </select>
+            <button class="btn btn-primary" onclick="exportOrders()">导出Excel</button>
+        </div>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>订单号</th>
+                <th>用户</th>
+                <th>金额</th>
+                <th>状态</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="ordersTable">
+            <tr>
+                <td colspan="6" style="text-align: center; color: #888;">加载中...</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="display: flex; justify-content: center; margin-top: 20px; gap: 10px;">
+        <button class="btn" onclick="prevPage()" style="background: rgba(255,255,255,0.1); color: #fff;">上一页</button>
+        <span id="pageInfo" style="color: #888; line-height: 32px;">第 1 页</span>
+        <button class="btn" onclick="nextPage()" style="background: rgba(255,255,255,0.1); color: #fff;">下一页</button>
+    </div>
+</div>
+
+<!-- 订单详情弹窗 -->
+<div id="orderModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: #1a1a2e; border-radius: 12px; padding: 30px; width: 90%; max-width: 600px; border: 1px solid rgba(255,255,255,0.1); max-height: 90vh; overflow-y: auto;">
+        <h3 style="color: #4CAF50; margin-bottom: 20px;">订单详情</h3>
+        <div id="orderDetailContent" style="color: #fff; line-height: 2;">
+            加载中...
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn" onclick="closeOrderModal()" style="flex: 1; background: rgba(255,255,255,0.1); color: #fff;">关闭</button>
+            <button class="btn btn-primary" id="confirmBtn" onclick="confirmOrder()" style="flex: 1; display: none;">确认订单</button>
+            <button class="action-btn delete" id="cancelBtn" onclick="cancelOrder()" style="flex: 1; display: none; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;">取消订单</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let allOrders = [];
+let currentOrderId = null;
+
+function ordersInit() {
+    loadOrders();
+}
+
+function loadOrders() {
+    const adminToken = localStorage.getItem('adminToken');
+    const status = document.getElementById('statusFilter').value;
+
+    fetch('/order/list', {
+        headers: { 'token': adminToken }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.code === 1) {
+            allOrders = JSON.parse(result.data);
+            if (status) {
+                allOrders = allOrders.filter(o => o.status === status);
+            }
+            renderOrders();
+        }
+    })
+    .catch(() => {
+        document.getElementById('ordersTable').innerHTML = '<tr><td colspan="6" style="text-align: center; color: #888;">加载失败</td></tr>';
+    });
+}
+
+function renderOrders() {
+    const tbody = document.getElementById('ordersTable');
+    if (allOrders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #888;">暂无订单</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = allOrders.map(order => {
+        let statusClass, statusText;
+        switch(order.status) {
+            case 'pending':
+                statusClass = 'status-inactive';
+                statusText = '待支付';
+                break;
+            case 'confirmed':
+                statusClass = 'status-active';
+                statusText = '已确认';
+                break;
+            case 'completed':
+                statusClass = 'status-active';
+                statusText = '已完成';
+                break;
+            case 'cancelled':
+                statusClass = 'status-inactive';
+                statusText = '已取消';
+                break;
+            default:
+                statusClass = 'status-inactive';
+                statusText = '未知';
+        }
+        const date = new Date(order.created_at).toLocaleString('zh-CN');
+        return `
+            <tr>
+                <td>${order.order_no || order.order_id}</td>
+                <td>${order.username || '-'}</td>
+                <td>¥${order.price || 0}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>${date}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="action-btn edit" onclick="viewOrder('${order.order_id}')">查看</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function viewOrder(orderId) {
+    currentOrderId = orderId;
+    const order = allOrders.find(o => o.order_id === orderId);
+    if (!order) return;
+
+    let statusText;
+    switch(order.status) {
+        case 'pending': statusText = '待支付'; break;
+        case 'confirmed': statusText = '已确认'; break;
+        case 'completed': statusText = '已完成'; break;
+        case 'cancelled': statusText = '已取消'; break;
+        default: statusText = '未知';
+    }
+
+    document.getElementById('orderDetailContent').innerHTML = `
+        <p><strong>订单号：</strong>${order.order_no || order.order_id}</p>
+        <p><strong>用户：</strong>${order.username || '-'}</p>
+        <p><strong>订单金额：</strong>¥${order.price || 0}</p>
+        <p><strong>订单状态：</strong>${statusText}</p>
+        <p><strong>支付方式：</strong>${order.payment_method || '未支付'}</p>
+        <p><strong>创建时间：</strong>${new Date(order.created_at).toLocaleString('zh-CN')}</p>
+        <p><strong>支付时间：</strong>${order.payment_time ? new Date(order.payment_time).toLocaleString('zh-CN') : '-'}</p>
+    `;
+
+    // 显示/隐藏操作按钮
+    document.getElementById('confirmBtn').style.display = order.status === 'pending' ? 'block' : 'none';
+    document.getElementById('cancelBtn').style.display = order.status === 'pending' || order.status === 'confirmed' ? 'block' : 'none';
+
+    document.getElementById('orderModal').style.display = 'flex';
+}
+
+function closeOrderModal() {
+    document.getElementById('orderModal').style.display = 'none';
+    currentOrderId = null;
+}
+
+function confirmOrder() {
+    if (!currentOrderId) return;
+
+    const adminToken = localStorage.getItem('adminToken');
+    fetch('/order/confirm', {
+        method: 'POST',
+        headers: {
+            'token': adminToken,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `orderId=${currentOrderId}`
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.code === 1) {
+            alert('订单确认成功');
+            closeOrderModal();
+            loadOrders();
+        } else {
+            alert(result.data || '确认失败');
+        }
+    })
+    .catch(() => alert('确认失败'));
+}
+
+function cancelOrder() {
+    if (!currentOrderId) return;
+    if (!confirm('确定要取消该订单吗？')) return;
+
+    const adminToken = localStorage.getItem('adminToken');
+    fetch('/order/cancel', {
+        method: 'POST',
+        headers: {
+            'token': adminToken,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `orderId=${currentOrderId}`
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.code === 1) {
+            alert('订单取消成功');
+            closeOrderModal();
+            loadOrders();
+        } else {
+            alert(result.data || '取消失败');
+        }
+    })
+    .catch(() => alert('取消失败'));
+}
+
+function exportOrders() {
+    alert('导出功能开发中...');
+}
+
+function prevPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        document.getElementById('pageInfo').textContent = `第 ${currentPage} 页`;
+        loadOrders();
+    }
+}
+
+function nextPage() {
+    currentPage++;
+    document.getElementById('pageInfo').textContent = `第 ${currentPage} 页`;
+    loadOrders();
+}
+</script>

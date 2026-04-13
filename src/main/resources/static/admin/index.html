@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #0f0f1a;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h1 {
+            color: #4CAF50;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-info {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .admin-info .name {
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .admin-info .role {
+            color: #888;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .nav-menu {
+            flex: 1;
+            padding: 15px 0;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #aaa;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+            border-left-color: #4CAF50;
+        }
+
+        .nav-item i {
+            width: 24px;
+            margin-right: 10px;
+            font-style: normal;
+        }
+
+        .sidebar-footer {
+            padding: 15px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 10px;
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(231, 76, 60, 0.3);
+        }
+
+        /* 主内容区 */
+        .main-content {
+            margin-left: 250px;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .page-title {
+            font-size: 20px;
+            color: #fff;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .content-area {
+            padding: 30px;
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+            border: 1px solid rgba(76, 175, 80, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card.blue {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(52, 152, 219, 0.05) 100%);
+            border-color: rgba(52, 152, 219, 0.2);
+        }
+
+        .stat-card.orange {
+            background: linear-gradient(135deg, rgba(230, 126, 34, 0.1) 0%, rgba(230, 126, 34, 0.05) 100%);
+            border-color: rgba(230, 126, 34, 0.2);
+        }
+
+        .stat-card.purple {
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.1) 0%, rgba(155, 89, 182, 0.05) 100%);
+            border-color: rgba(155, 89, 182, 0.2);
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            color: #fff;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .stat-change {
+            color: #4CAF50;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* 内容卡片 */
+        .content-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            color: #fff;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+        }
+
+        /* 表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-table th {
+            color: #888;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .data-table td {
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .status-active {
+            background: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+        }
+
+        .status-inactive {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 4px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .action-btn.edit {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+        }
+
+        .action-btn.delete {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+
+        /* 加载动画 */
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 50px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>🛠️ 管理后台</h1>
+        </div>
+
+        <div class="admin-info">
+            <div class="name" id="adminName">加载中...</div>
+            <div class="role" id="adminRole">加载中...</div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="#" class="nav-item active" onclick="showPage('dashboard', this)">
+                <i>📊</i> 仪表盘
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('users', this)">
+                <i>👥</i> 用户管理
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('sites', this)">
+                <i>🏞️</i> 景点管理
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('tickets', this)">
+                <i>🎫</i> 门票管理
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('orders', this)">
+                <i>📋</i> 订单管理
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('admins', this)">
+                <i>🔧</i> 管理员设置
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="logout-btn" onclick="logout()">退出登录</button>
+        </div>
+    </aside>
+
+    <!-- 主内容 -->
+    <main class="main-content">
+        <div class="top-bar">
+            <h2 class="page-title" id="pageTitle">仪表盘</h2>
+            <div class="top-actions">
+                <span style="color: #888;">欢迎回来，<span id="topAdminName">管理员</span></span>
+            </div>
+        </div>
+
+        <div class="content-area" id="contentArea">
+            <!-- 动态加载内容 -->
+        </div>
+    </main>
+
+    <script>
+        let adminToken = localStorage.getItem('adminToken');
+        let currentAdmin = null;
+
+        // 检查登录状态
+        if (!adminToken) {
+            window.location.href = '/admin/login.html';
+        }
+
+        // 页面加载
+        window.onload = function() {
+            loadAdminProfile();
+            showPage('dashboard', document.querySelector('.nav-item.active'));
+        };
+
+        // 加载管理员信息
+        function loadAdminProfile() {
+            fetch('/admin/profile', {
+                headers: { 'token': adminToken }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    currentAdmin = JSON.parse(result.data);
+                    document.getElementById('adminName').textContent = currentAdmin.name || currentAdmin.username;
+                    document.getElementById('topAdminName').textContent = currentAdmin.name || currentAdmin.username;
+                    document.getElementById('adminRole').textContent = getRoleText(currentAdmin.role);
+                } else {
+                    logout();
+                }
+            })
+            .catch(() => logout());
+        }
+
+        // 获取角色文本
+        function getRoleText(role) {
+            const roles = {
+                'super': '超级管理员',
+                'admin': '管理员',
+                'operator': '运营人员'
+            };
+            return roles[role] || role;
+        }
+
+        // 切换页面
+        function showPage(page, element) {
+            // 更新导航状态
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            if (element) element.classList.add('active');
+
+            // 更新标题
+            const titles = {
+                'dashboard': '仪表盘',
+                'users': '用户管理',
+                'sites': '景点管理',
+                'tickets': '门票管理',
+                'orders': '订单管理',
+                'admins': '管理员设置'
+            };
+            document.getElementById('pageTitle').textContent = titles[page] || '管理后台';
+
+            // 加载页面内容
+            const contentArea = document.getElementById('contentArea');
+            contentArea.innerHTML = '<div class="loading-container"><div class="loading-spinner"></div></div>';
+
+            // 加载对应页面
+            fetch('/admin/' + page + '.html')
+            .then(response => response.text())
+            .then(html => {
+                contentArea.innerHTML = html;
+                // 执行页面脚本
+                if (window[page + 'Init']) {
+                    window[page + 'Init']();
+                }
+            })
+            .catch(() => {
+                contentArea.innerHTML = '<div style="text-align: center; padding: 50px; color: #888;">页面加载失败</div>';
+            });
+        }
+
+        // 退出登录
+        function logout() {
+            fetch('/admin/logout', {
+                method: 'POST',
+                headers: { 'token': adminToken }
+            }).finally(() => {
+                localStorage.removeItem('adminToken');
+                window.location.href = '/admin/login.html';
+            });
+        }
+    </script>
+</body>
+</html>

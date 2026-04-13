@@ -29,4 +29,14 @@ public class Site {
     public List<SiteIcon> site(int site_id) {
         return siteService.getSiteIcons(site_id);
     }
+
+    @GetMapping("/search")
+    public List<Site_list> search(@RequestParam("keyword") String keyword, @RequestParam("start") int start) {
+        return siteService.searchSites(keyword, start);
+    }
+
+    @GetMapping("/search/count")
+    public int searchCount(@RequestParam("keyword") String keyword) {
+        return siteService.countSearchSites(keyword);
+    }
 }

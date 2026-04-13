@@ -149,6 +149,92 @@
             font-size: 16px;
         }
 
+        /* 门票购买区域 */
+        .ticket-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .ticket-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .ticket-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .ticket-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .ticket-info {
+            flex: 1;
+        }
+
+        .ticket-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .ticket-desc {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .ticket-price-box {
+            text-align: right;
+            margin-right: 20px;
+        }
+
+        .ticket-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f5576c;
+        }
+
+        .ticket-original-price {
+            font-size: 14px;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .buy-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .buy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .buy-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         /* 图片画廊 */
         .gallery-section {
             background: white;
@@ -252,6 +338,152 @@
         .modal-close:hover {
             opacity: 0.7;
         }
+
+        /* 支付模态框 */
+        .payment-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .payment-modal.active {
+            display: flex;
+        }
+
+        .payment-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .payment-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .payment-amount {
+            font-size: 32px;
+            color: #f5576c;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .payment-qrcode {
+            width: 250px;
+            height: 250px;
+            margin: 20px auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+        }
+
+        .payment-qrcode img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .payment-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .payment-btn {
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .payment-btn.cancel {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .payment-btn.confirm {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .payment-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 订单结果模态框 */
+        .order-result-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2001;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .order-result-modal.active {
+            display: flex;
+        }
+
+        .order-result-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .order-result-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .order-result-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .order-info {
+            text-align: left;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .order-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .order-info-item:last-child {
+            margin-bottom: 0;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -260,7 +492,7 @@
         <div class="logo" onclick="window.location.href='/sites.html'">🌍 探索世界</div>
         <nav class="nav-links">
             <a href="/sites.html">首页</a>
-            <a href="/profile.html">个人中心</a>
+            <a href="/user-profile.html">个人中心</a>
             <a href="#" onclick="logout()">退出</a>
         </nav>
     </header>
@@ -307,6 +539,19 @@
                 <p class="description-text" id="siteDescription">暂无描述</p>
             </div>
 
+            <!-- 门票购买 -->
+            <div class="ticket-section">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#667eea">
+                        <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
+                    </svg>
+                    门票购买
+                </h2>
+                <div id="ticketList" class="ticket-list">
+                    <!-- 门票列表将在这里动态加载 -->
+                </div>
+            </div>
+
             <!-- 图片画廊 -->
             <div class="gallery-section">
                 <h2 class="section-title">
@@ -328,11 +573,47 @@
         <img id="modalImage" class="modal-image" src="" alt="预览">
     </div>
 
+    <!-- 支付模态框 -->
+    <div id="paymentModal" class="payment-modal">
+        <div class="payment-content">
+            <h3 class="payment-title">请扫码支付</h3>
+            <div class="payment-amount" id="paymentAmount">¥0.00</div>
+            <div class="payment-qrcode">
+                <img src="/skm.png" alt="收款码">
+            </div>
+            <p style="color: #666; margin: 10px 0;">请使用微信或支付宝扫码支付</p>
+            <div class="payment-buttons">
+                <button class="payment-btn cancel" onclick="closePaymentModal()">取消</button>
+                <button class="payment-btn confirm" onclick="confirmPayment()">我已付款</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 订单结果模态框 -->
+    <div id="orderResultModal" class="order-result-modal">
+        <div class="order-result-content">
+            <div class="order-result-icon" id="resultIcon">✅</div>
+            <h3 class="order-result-title" id="resultTitle">支付成功</h3>
+            <div class="order-info" id="orderInfo">
+                <!-- 订单信息将在这里显示 -->
+            </div>
+            <button class="payment-btn confirm" onclick="closeOrderResultModal()">确定</button>
+        </div>
+    </div>
+
     <script>
+        console.log('SCRIPT START');
+        let currentSiteId = null;
+        let currentOrderId = null;
+        let currentTicketInfo = null;
+        const token = localStorage.getItem('token');
+        console.log('token:', token);
+
         // 页面加载时获取数据
         window.onload = function() {
-            const token = localStorage.getItem('token');
+            console.log('WINDOW ONLOAD START');
             if (!token) {
+                console.log('no token, redirect to login');
                 window.location.href = '/login.html';
                 return;
             }
@@ -340,6 +621,7 @@
             // 从URL获取site_id
             const urlParams = new URLSearchParams(window.location.search);
             const siteId = urlParams.get('site_id');
+            console.log('site_id from URL:', siteId);
 
             if (!siteId) {
                 alert('未指定景点ID');
@@ -347,7 +629,12 @@
                 return;
             }
 
+            currentSiteId = siteId;
+            console.log('页面加载，siteId:', siteId);
+            console.log('准备调用loadTickets');
             loadSiteDetail(siteId, token);
+            loadTickets(siteId, token);
+            console.log('WINDOW ONLOAD END');
         };
 
         // 加载景点详情
@@ -390,6 +677,225 @@
                 console.error('加载景点详情失败:', error);
                 alert('加载景点详情失败');
             });
+        }
+
+        // 解析后端返回的JSON String数据
+        function parseData(dataStr) {
+            try {
+                return JSON.parse(dataStr);
+            } catch (e) {
+                console.error('解析数据失败:', dataStr, e);
+                return dataStr;
+            }
+        }
+
+        // 加载门票列表
+        function loadTickets(siteId, token) {
+            console.log('开始加载门票，siteId:', siteId);
+            fetch(`/ticket/list?siteId=${siteId}`, {
+                method: 'GET',
+                headers: {
+                    'token': token
+                }
+            })
+            .then(response => response.json())
+            .then(result => {
+                const ticketList = document.getElementById('ticketList');
+                
+                // 调试输出
+                console.log('门票列表返回结果:', result);
+                
+                if (result.code !== 1) {
+                    ticketList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">🎫</div>
+                            <p>${result.data || '暂无门票信息'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 解析String类型的data
+                let tickets = result.data;
+                console.log('原始data:', tickets);
+                
+                if (typeof tickets === 'string') {
+                    tickets = parseData(tickets);
+                }
+                
+                console.log('解析后的门票:', tickets);
+                
+                if (!tickets || (Array.isArray(tickets) && tickets.length === 0)) {
+                    ticketList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">🎫</div>
+                            <p>暂无门票信息</p>
+                        </div>
+                    `;
+                } else {
+                    const ticketArray = Array.isArray(tickets) ? tickets : [tickets];
+                    ticketList.innerHTML = ticketArray.map(ticket => {
+                        console.log('单个门票:', ticket);
+                        const id = ticket.id;
+                        const name = ticket.name || '未知门票';
+                        const price = ticket.price || 0;
+                        const description = ticket.description || '暂无说明';
+                        return `
+                        <div class="ticket-item">
+                            <div class="ticket-info">
+                                <div class="ticket-name">${name}</div>
+                                <div class="ticket-desc">${description}</div>
+                            </div>
+                            <div class="ticket-price-box">
+                                <div class="ticket-price">¥${price}</div>
+                                ${ticket.originalPrice ? `<div class="ticket-original-price">¥${ticket.originalPrice}</div>` : ''}
+                            </div>
+                            <button class="buy-btn" onclick="buyTicket(${id}, '${name}', ${price})">立即购买</button>
+                        </div>
+                    `}).join('');
+                }
+            })
+            .catch(error => {
+                console.error('加载门票失败:', error);
+                document.getElementById('ticketList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">❌</div>
+                        <p>加载门票失败</p>
+                    </div>
+                `;
+            });
+        }
+
+        // 购买门票
+        function buyTicket(ticketId, ticketName, ticketPrice) {
+            console.log('buyTicket参数:', { ticketId, ticketName, ticketPrice });
+            
+            // 参数校验
+            if (!ticketId || ticketId === 'undefined' || ticketId === 'null') {
+                alert('门票ID无效，请刷新页面重试');
+                return;
+            }
+            
+            currentTicketInfo = { ticketId, ticketName, ticketPrice, quantity: 1 };
+            
+            fetch('/order/create', {
+                method: 'POST',
+                headers: {
+                    'token': token,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `ticketId=${ticketId}&quantity=1`
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    // 解析String类型的data
+                    let orderData = result.data;
+                    if (typeof orderData === 'string') {
+                        orderData = parseData(orderData);
+                    }
+                    currentOrderId = orderData.orderId;
+                    document.getElementById('paymentAmount').textContent = '¥' + (orderData.totalPrice || 0);
+                    document.getElementById('paymentModal').classList.add('active');
+                } else {
+                    alert(result.data || '创建订单失败');
+                }
+            })
+            .catch(error => {
+                console.error('创建订单失败:', error);
+                alert('创建订单失败');
+            });
+        }
+
+        // 关闭支付模态框
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('active');
+            currentOrderId = null;
+        }
+
+        // 确认支付
+        function confirmPayment() {
+            if (!currentOrderId) return;
+
+            fetch('/order/confirm', {
+                method: 'POST',
+                headers: {
+                    'token': token,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `orderId=${currentOrderId}`
+            })
+            .then(response => response.json())
+            .then(result => {
+                closePaymentModal();
+                
+                if (result.code === 1) {
+                    // 显示成功结果
+                    document.getElementById('resultIcon').textContent = '✅';
+                    document.getElementById('resultTitle').textContent = '支付成功';
+                    
+                    // 获取订单详情
+                    return fetch(`/order/detail?orderId=${currentOrderId}`, {
+                        headers: { 'token': token }
+                    }).then(r => r.json());
+                } else {
+                    // 显示失败结果
+                    document.getElementById('resultIcon').textContent = '❌';
+                    document.getElementById('resultTitle').textContent = '支付失败';
+                    document.getElementById('orderInfo').innerHTML = `<p style="color: #f5576c;">${result.data || '支付确认失败'}</p>`;
+                    document.getElementById('orderResultModal').classList.add('active');
+                    return null;
+                }
+            })
+            .then(orderResult => {
+                if (orderResult && orderResult.code === 1) {
+                    // 解析String类型的data
+                    let order = orderResult.data;
+                    if (typeof order === 'string') {
+                        order = parseData(order);
+                    }
+                    const items = order.items || [];
+                    
+                    let orderInfoHtml = `
+                        <div class="order-info-item">
+                            <span>订单编号</span>
+                            <span>${order.orderNo || currentOrderId}</span>
+                        </div>
+                    `;
+                    
+                    items.forEach(item => {
+                        orderInfoHtml += `
+                            <div class="order-info-item">
+                                <span>${item.ticketName} x${item.quantity}</span>
+                                <span>¥${item.subtotal}</span>
+                            </div>
+                        `;
+                    });
+                    
+                    orderInfoHtml += `
+                        <div class="order-info-item">
+                            <span>实付金额</span>
+                            <span style="color: #f5576c; font-size: 18px;">¥${order.totalPrice || 0}</span>
+                        </div>
+                    `;
+                    
+                    document.getElementById('orderInfo').innerHTML = orderInfoHtml;
+                    document.getElementById('orderResultModal').classList.add('active');
+                    
+                    // 刷新门票列表（库存可能变化）
+                    loadTickets(currentSiteId, token);
+                }
+            })
+            .catch(error => {
+                console.error('确认支付失败:', error);
+                alert('确认支付失败');
+            });
+        }
+
+        // 关闭订单结果模态框
+        function closeOrderResultModal() {
+            document.getElementById('orderResultModal').classList.remove('active');
+            currentOrderId = null;
         }
 
         // 加载景点照片

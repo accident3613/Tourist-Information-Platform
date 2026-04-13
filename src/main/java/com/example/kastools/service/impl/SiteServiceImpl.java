@@ -29,4 +29,14 @@ public class SiteServiceImpl implements SiteService {
     public List<SiteIcon> getSiteIcons(int siteId) {
         return siteMap.siteicon(siteId);
     }
+
+    @Override
+    public List<Site_list> searchSites(String keyword, int start) {
+        return siteMap.searchByName(keyword, start);
+    }
+
+    @Override
+    public int countSearchSites(String keyword) {
+        return siteMap.countByKeyword(keyword);
+    }
 }

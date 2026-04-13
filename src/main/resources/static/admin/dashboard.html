@@ -1,0 +1,147 @@
+<!-- 仪表盘页面 -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">总用户数</div>
+        <div class="stat-value" id="totalUsers">-</div>
+        <div class="stat-change">平台注册用户总数</div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-label">今日新增用户</div>
+        <div class="stat-value" id="todayUsers">-</div>
+        <div class="stat-change">较昨日 +0%</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-label">总订单数</div>
+        <div class="stat-value" id="totalOrders">-</div>
+        <div class="stat-change">累计订单数量</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-label">总销售额</div>
+        <div class="stat-value" id="totalRevenue">-</div>
+        <div class="stat-change">累计销售金额</div>
+    </div>
+</div>
+
+<div class="content-card">
+    <div class="card-header">
+        <h3 class="card-title">📈 订单趋势（近7天）</h3>
+    </div>
+    <div id="orderChart" style="height: 300px; display: flex; align-items: center; justify-content: center; color: #888;">
+        图表加载中...
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div class="content-card">
+        <div class="card-header">
+            <h3 class="card-title">🏆 热门景点TOP5</h3>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>排名</th>
+                    <th>景点名称</th>
+                    <th>收藏数</th>
+                </tr>
+            </thead>
+            <tbody id="topSites">
+                <tr>
+                    <td colspan="3" style="text-align: center; color: #888;">加载中...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="content-card">
+        <div class="card-header">
+            <h3 class="card-title">📝 最新订单</h3>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>订单号</th>
+                    <th>金额</th>
+                    <th>状态</th>
+                </tr>
+            </thead>
+            <tbody id="recentOrders">
+                <tr>
+                    <td colspan="3" style="text-align: center; color: #888;">加载中...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function dashboardInit() {
+    loadDashboardStats();
+    loadTopSites();
+    loadRecentOrders();
+}
+
+// 加载统计数据
+function loadDashboardStats() {
+    // 这里需要后端提供统计接口，暂时使用模拟数据
+    document.getElementById('totalUsers').textContent = '1,234';
+    document.getElementById('todayUsers').textContent = '+12';
+    document.getElementById('totalOrders').textContent = '567';
+    document.getElementById('totalRevenue').textContent = '¥89,234';
+}
+
+// 加载热门景点
+function loadTopSites() {
+    const adminToken = localStorage.getItem('adminToken');
+    fetch('/site', {
+        headers: { 'token': adminToken }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.code === 1) {
+            const sites = JSON.parse(result.data);
+            const sorted = sites.sort((a, b) => b.number - a.number).slice(0, 5);
+            const tbody = document.getElementById('topSites');
+            tbody.innerHTML = sorted.map((site, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${site.name}</td>
+                    <td>${site.number || 0}</td>
+                </tr>
+            `).join('');
+        }
+    })
+    .catch(() => {
+        document.getElementById('topSites').innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">加载失败</td></tr>';
+    });
+}
+
+// 加载最新订单
+function loadRecentOrders() {
+    const adminToken = localStorage.getItem('adminToken');
+    fetch('/order/list', {
+        headers: { 'token': adminToken }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.code === 1) {
+            const orders = JSON.parse(result.data);
+            const recent = orders.slice(0, 5);
+            const tbody = document.getElementById('recentOrders');
+            tbody.innerHTML = recent.map(order => {
+                const statusClass = order.status === 'completed' || order.status === 'confirmed' ? 'status-active' : 'status-inactive';
+                const statusText = order.status === 'completed' ? '已完成' : order.status === 'confirmed' ? '已确认' : '待支付';
+                return `
+                    <tr>
+                        <td>${order.order_no || order.order_id}</td>
+                        <td>¥${order.price}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    })
+    .catch(() => {
+        document.getElementById('recentOrders').innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">加载失败</td></tr>';
+    });
+}
+</script>

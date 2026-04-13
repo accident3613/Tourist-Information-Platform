@@ -1,0 +1,266 @@
+<!-- 管理员设置页面 -->
+<div class="content-card">
+    <div class="card-header">
+        <h3 class="card-title">管理员列表</h3>
+        <button class="btn btn-primary" onclick="openAddAdminModal()">+ 新增管理员</button>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>账号</th>
+                <th>姓名</th>
+                <th>角色</th>
+                <th>状态</th>
+                <th>最后登录</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="adminsTable">
+            <tr>
+                <td colspan="7" style="text-align: center; color: #888;">加载中...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="content-card">
+    <div class="card-header">
+        <h3 class="card-title">操作日志</h3>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>时间</th>
+                <th>管理员</th>
+                <th>操作</th>
+                <th>对象</th>
+                <th>详情</th>
+            </tr>
+        </thead>
+        <tbody id="logsTable">
+            <tr>
+                <td colspan="5" style="text-align: center; color: #888;">加载中...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- 新增/编辑管理员弹窗 -->
+<div id="adminModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: #1a1a2e; border-radius: 12px; padding: 30px; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1);">
+        <h3 style="color: #4CAF50; margin-bottom: 20px;" id="adminModalTitle">新增管理员</h3>
+        <div style="margin-bottom: 15px;">
+            <label style="color: #888; display: block; margin-bottom: 5px;">账号</label>
+            <input type="text" id="adminUsername" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="color: #888; display: block; margin-bottom: 5px;">姓名</label>
+            <input type="text" id="adminName" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="color: #888; display: block; margin-bottom: 5px;">密码</label>
+            <input type="password" id="adminPassword" placeholder="不修改请留空" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="color: #888; display: block; margin-bottom: 5px;">角色</label>
+            <select id="adminRole" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;">
+                <option value="operator">运营人员</option>
+                <option value="admin">管理员</option>
+                <option value="super">超级管理员</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" onclick="closeAdminModal()" style="flex: 1; background: rgba(255,255,255,0.1); color: #fff;">取消</button>
+            <button class="btn btn-primary" onclick="saveAdmin()" style="flex: 1;">保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let editingAdminId = null;
+
+function adminsInit() {
+    loadAdmins();
+    loadLogs();
+}
+
+function loadAdmins() {
+    const adminToken = localStorage.getItem('adminToken');
+    fetch('/admin/list', {
+        headers: { 'token': adminToken }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.code === 1) {
+            const admins = JSON.parse(result.data);
+            renderAdmins(admins);
+        }
+    })
+    .catch(() => {
+        document.getElementById('adminsTable').innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">加载失败</td></tr>';
+    });
+}
+
+function renderAdmins(admins) {
+    const tbody = document.getElementById('adminsTable');
+    if (admins.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">暂无管理员</td></tr>';
+        return;
+    }
+
+    const roleTexts = {
+        'super': '超级管理员',
+        'admin': '管理员',
+        'operator': '运营人员'
+    };
+
+    tbody.innerHTML = admins.map(admin => {
+        const statusClass = admin.status === 1 ? 'status-active' : 'status-inactive';
+        const statusText = admin.status === 1 ? '启用' : '禁用';
+        const lastLogin = admin.lastLoginTime ? new Date(admin.lastLoginTime).toLocaleString('zh-CN') : '-';
+        return `
+            <tr>
+                <td>${admin.id}</td>
+                <td>${admin.username}</td>
+                <td>${admin.name || '-'}</td>
+                <td>${roleTexts[admin.role] || admin.role}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>${lastLogin}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="action-btn edit" onclick="editAdmin(${admin.id}, '${admin.username}', '${admin.name || ''}', '${admin.role}')">编辑</button>
+                        <button class="action-btn delete" onclick="deleteAdmin(${admin.id}, '${admin.username}')">删除</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function loadLogs() {
+    const adminToken = localStorage.getItem('adminToken');
+    fetch('/admin/logs?limit=20', {
+        headers: { 'token': adminToken }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.code === 1) {
+            const logs = JSON.parse(result.data);
+            renderLogs(logs);
+        }
+    })
+    .catch(() => {
+        document.getElementById('logsTable').innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">加载失败</td></tr>';
+    });
+}
+
+function renderLogs(logs) {
+    const tbody = document.getElementById('logsTable');
+    if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">暂无日志</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = logs.map(log => `
+        <tr>
+            <td>${new Date(log.createTime).toLocaleString('zh-CN')}</td>
+            <td>${log.adminUsername || '-'}</td>
+            <td>${log.action}</td>
+            <td>${log.targetType || '-'}</td>
+            <td>${log.detail || '-'}</td>
+        </tr>
+    `).join('');
+}
+
+function openAddAdminModal() {
+    editingAdminId = null;
+    document.getElementById('adminModalTitle').textContent = '新增管理员';
+    document.getElementById('adminUsername').value = '';
+    document.getElementById('adminName').value = '';
+    document.getElementById('adminPassword').value = '';
+    document.getElementById('adminPassword').placeholder = '请输入密码';
+    document.getElementById('adminRole').value = 'operator';
+    document.getElementById('adminModal').style.display = 'flex';
+}
+
+function editAdmin(id, username, name, role) {
+    editingAdminId = id;
+    document.getElementById('adminModalTitle').textContent = '编辑管理员';
+    document.getElementById('adminUsername').value = username;
+    document.getElementById('adminName').value = name;
+    document.getElementById('adminPassword').value = '';
+    document.getElementById('adminPassword').placeholder = '不修改请留空';
+    document.getElementById('adminRole').value = role;
+    document.getElementById('adminModal').style.display = 'flex';
+}
+
+function closeAdminModal() {
+    document.getElementById('adminModal').style.display = 'none';
+}
+
+function saveAdmin() {
+    const username = document.getElementById('adminUsername').value.trim();
+    const name = document.getElementById('adminName').value.trim();
+    const password = document.getElementById('adminPassword').value;
+    const role = document.getElementById('adminRole').value;
+
+    if (!username) {
+        alert('请输入账号');
+        return;
+    }
+    if (!editingAdminId && !password) {
+        alert('请输入密码');
+        return;
+    }
+
+    const adminToken = localStorage.getItem('adminToken');
+    const data = { username, name, role };
+    if (password) data.password = password;
+    if (editingAdminId) data.id = editingAdminId;
+
+    const url = editingAdminId ? '/admin/update' : '/admin/create';
+    const method = editingAdminId ? 'PUT' : 'POST';
+
+    fetch(url, {
+        method: method,
+        headers: {
+            'token': adminToken,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.code === 1) {
+            alert('保存成功');
+            closeAdminModal();
+            loadAdmins();
+        } else {
+            alert(result.data || '保存失败');
+        }
+    })
+    .catch(() => alert('保存失败'));
+}
+
+function deleteAdmin(id, username) {
+    if (!confirm(`确定要删除管理员 "${username}" 吗？`)) return;
+
+    const adminToken = localStorage.getItem('adminToken');
+    fetch('/admin/delete/' + id, {
+        method: 'DELETE',
+        headers: { 'token': adminToken }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.code === 1) {
+            alert('删除成功');
+            loadAdmins();
+        } else {
+            alert(result.data || '删除失败');
+        }
+    })
+    .catch(() => alert('删除失败'));
+}
+</script>
