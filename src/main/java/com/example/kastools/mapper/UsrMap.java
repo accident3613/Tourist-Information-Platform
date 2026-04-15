@@ -17,7 +17,7 @@ public interface UsrMap {
 @Insert("INSERT INTO user (username, password) VALUES (#{username}, #{password})")
     int regmap(String username, String password);  //注册
 
-    @Select("SELECT status FROM user WHERE username = #{usernmae}")
+    @Select("SELECT IFNULL(status, 0) FROM user WHERE username = #{username}")
     int chkmap(String username);  //检查登录状态
 @Select("SELECT * FROM user WHERE username = #{username}")
     User prfmap(String username);  //获取用户信息
@@ -36,5 +36,8 @@ public interface UsrMap {
 
     @Select("Select COUNT(*) FROM collections WHERE username = #{username} and site_id = #{site_id}")
     int chkcol(String username,int site_id);
+
+    @Select("SELECT * FROM user")
+    List<User> findAllUsers();
 
 }

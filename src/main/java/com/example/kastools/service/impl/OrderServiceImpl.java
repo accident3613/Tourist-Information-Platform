@@ -5,6 +5,7 @@ import com.example.kastools.entity.OrderItem;
 import com.example.kastools.entity.Result;
 import com.example.kastools.entity.Ticket;
 import com.example.kastools.mapper.OrderMapper;
+import com.example.kastools.mapper.SiteMap;
 import com.example.kastools.mapper.TicketMapper;
 import com.example.kastools.service.OrderService;
 import com.example.kastools.utils.Jwt;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -23,6 +25,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private OrderMapper orderMapper;
+
+    @Autowired
+    private SiteMap siteMap;
 
     @Autowired
     private Jwt jwt;
@@ -51,6 +56,9 @@ public class OrderServiceImpl implements OrderService {
         String orderId = UUID.randomUUID().toString();
         String orderNo = "ORD" + System.currentTimeMillis();
         Double totalPrice = ticket.getPrice() * quantity;
+        
+        // 设置过期日期为15天后
+        LocalDateTime expireDate = LocalDateTime.now().plusDays(15);
 
         int insertResult = orderMapper.insertOrder(
                 orderId,
@@ -60,7 +68,9 @@ public class OrderServiceImpl implements OrderService {
                 totalPrice,
                 "pending",
                 "unpaid",
-                null
+                null,
+                0,
+                expireDate
         );
 
         if (insertResult <= 0) {
@@ -118,6 +128,13 @@ public class OrderServiceImpl implements OrderService {
 
         int updateResult = orderMapper.confirmPayment(orderId);
         if (updateResult > 0) {
+            // 支付成功，增加景区的number字段（去过的人数）
+            for (OrderItem item : items) {
+                Ticket ticket = ticketMapper.findById(item.getTicket_id());
+                if (ticket != null && ticket.getSite_id() != null) {
+                    siteMap.incrementNumber(ticket.getSite_id().intValue());
+                }
+            }
             result.setCode(1);
             result.setData("支付成功");
         } else {
@@ -142,5 +159,46 @@ public class OrderServiceImpl implements OrderService {
         String token = request.getHeader("token");
         String username = jwt.getusn(token);
         return orderMapper.findOrdersByUsername(username);
+    }
+
+    @Override
+    public List<Map<String, Object>> getAllOrders() {
+        return orderMapper.findAllOrders();
+    }
+
+    @Override
+    @Transactional
+    public Result cancelOrder(String orderId) {
+        Result result = new Result();
+
+        Map<String, Object> order = orderMapper.findOrderById(orderId);
+        if (order == null) {
+            result.setCode(0);
+            result.setData("订单不存在");
+            return result;
+        }
+
+        String status = (String) order.get("status");
+        if ("cancelled".equals(status)) {
+            result.setCode(0);
+            result.setData("订单已取消");
+            return result;
+        }
+
+        if ("completed".equals(status)) {
+            result.setCode(0);
+            result.setData("订单已完成，无法取消");
+            return result;
+        }
+
+        int updateResult = orderMapper.cancelOrder(orderId);
+        if (updateResult > 0) {
+            result.setCode(1);
+            result.setData("订单已取消");
+        } else {
+            result.setCode(0);
+            result.setData("取消失败");
+        }
+        return result;
     }
 }

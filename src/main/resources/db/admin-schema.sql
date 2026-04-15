@@ -21,8 +21,9 @@ CREATE TABLE IF NOT EXISTS admin (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='管理员表';
 
 -- 插入默认超级管理员 (密码: admin123)
-INSERT INTO admin (username, password, name, role, status) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EO', '超级管理员', 'super', 1);
+-- BCrypt哈希值需要通过程序生成，以下是示例格式
+-- 请在首次运行后通过后端接口创建管理员，或使用以下SQL手动插入：
+-- INSERT INTO admin (username, password, name, role, status) VALUES ('admin', '$2a$10$...', '超级管理员', 'super', 1);
 
 -- --------------------------------------------
 -- 2. 管理员操作日志表 (admin_log)

@@ -341,6 +341,7 @@
             }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 </head>
 <body>
     <!-- 侧边栏 -->
@@ -356,22 +357,28 @@
 
         <nav class="nav-menu">
             <a href="#" class="nav-item active" onclick="showPage('dashboard', this)">
-                <i>📊</i> 仪表盘
+                 仪表盘
             </a>
             <a href="#" class="nav-item" onclick="showPage('users', this)">
-                <i>👥</i> 用户管理
+                用户管理
             </a>
             <a href="#" class="nav-item" onclick="showPage('sites', this)">
-                <i>🏞️</i> 景点管理
+                 景点管理
             </a>
             <a href="#" class="nav-item" onclick="showPage('tickets', this)">
-                <i>🎫</i> 门票管理
+                 门票管理
             </a>
             <a href="#" class="nav-item" onclick="showPage('orders', this)">
-                <i>📋</i> 订单管理
+                订单管理
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('agri', this)">
+                农特产管理
             </a>
             <a href="#" class="nav-item" onclick="showPage('admins', this)">
-                <i>🔧</i> 管理员设置
+                管理员设置
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('stats', this)">
+                数据分析
             </a>
         </nav>
 
@@ -451,7 +458,8 @@
                 'sites': '景点管理',
                 'tickets': '门票管理',
                 'orders': '订单管理',
-                'admins': '管理员设置'
+                'admins': '管理员设置',
+                'stats': '数据分析'
             };
             document.getElementById('pageTitle').textContent = titles[page] || '管理后台';
 
@@ -464,9 +472,19 @@
             .then(response => response.text())
             .then(html => {
                 contentArea.innerHTML = html;
-                // 执行页面脚本
-                if (window[page + 'Init']) {
-                    window[page + 'Init']();
+                // 执行页面中的脚本
+                const scripts = contentArea.querySelectorAll('script');
+                scripts.forEach(script => {
+                    try {
+                        eval(script.textContent);
+                    } catch(e) {
+                        console.error('Script error:', e);
+                    }
+                });
+                // 调用页面初始化函数
+                const initFunc = page + 'Init';
+                if (typeof window[initFunc] === 'function') {
+                    window[initFunc]();
                 }
             })
             .catch(() => {

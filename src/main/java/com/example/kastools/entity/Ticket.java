@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class Ticket {
     private Long id;
-    private Long siteId;
+    private Long site_id;
     private String name;
     private Double price;
     private Double originalPrice;

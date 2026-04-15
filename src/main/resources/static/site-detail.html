@@ -228,6 +228,58 @@
             box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
 
+        /* 数量选择器 */
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+
+        .quantity-btn {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .quantity-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .quantity-btn:disabled {
+            border-color: #ccc;
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .quantity-btn:disabled:hover {
+            background: white;
+            color: #ccc;
+        }
+
+        .quantity-display {
+            width: 50px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .ticket-total-price {
+            font-size: 14px;
+            color: #f5576c;
+            margin-top: 5px;
+        }
+
         .buy-btn:disabled {
             background: #ccc;
             cursor: not-allowed;
@@ -373,6 +425,26 @@
             color: #333;
         }
 
+        .payment-ticket-info {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .payment-ticket-info .ticket-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .payment-ticket-info .ticket-quantity {
+            font-size: 14px;
+            color: #666;
+        }
+
         .payment-amount {
             font-size: 32px;
             color: #f5576c;
@@ -484,6 +556,204 @@
             border-top: 1px solid #e0e0e0;
             font-weight: bold;
         }
+
+        /* 评论区域 */
+        .comment-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .comment-form {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .comment-form textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        .comment-form textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .comment-form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .rating-select {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rating-select label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 5px;
+        }
+
+        .star-rating .star {
+            font-size: 24px;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .star-rating .star.active,
+        .star-rating .star:hover {
+            color: #f5a623;
+        }
+
+        .submit-comment-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-comment-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-comment-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .comment-item {
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .comment-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .comment-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .comment-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .comment-username {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .comment-rating {
+            color: #f5a623;
+        }
+
+        .comment-time {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .comment-content {
+            color: #666;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+
+        .comment-pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .comment-pagination button {
+            padding: 8px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .comment-pagination button:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+        }
+
+        .comment-pagination button:disabled {
+            border-color: #ccc;
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .comment-pagination span {
+            color: #666;
+        }
+
+        .no-comments {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .no-comments .icon {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -539,6 +809,14 @@
                 <p class="description-text" id="siteDescription">暂无描述</p>
             </div>
 
+            <!-- 农特产按钮 -->
+            <div style="margin-bottom: 30px; text-align: center;">
+                <button class="buy-btn" onclick="goToAgriProducts()" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); display: inline-flex; align-items: center; gap: 10px; padding: 15px 40px;">
+                    <span style="font-size: 24px;">🌾</span>
+                    <span>查看当地农特产</span>
+                </button>
+            </div>
+
             <!-- 门票购买 -->
             <div class="ticket-section">
                 <h2 class="section-title">
@@ -564,6 +842,46 @@
                     <!-- 图片将在这里动态加载 -->
                 </div>
             </div>
+
+            <!-- 评论区 -->
+            <div class="comment-section">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#667eea">
+                        <path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/>
+                    </svg>
+                    用户评论 (<span id="commentCount">0</span>)
+                </h2>
+
+                <!-- 发表评论 -->
+                <div class="comment-form">
+                    <textarea id="commentContent" placeholder="分享您的游玩体验..."></textarea>
+                    <div class="comment-form-footer">
+                        <div class="rating-select">
+                            <label>评分：</label>
+                            <div class="star-rating" id="starRating">
+                                <span class="star active" data-rating="1">★</span>
+                                <span class="star active" data-rating="2">★</span>
+                                <span class="star active" data-rating="3">★</span>
+                                <span class="star active" data-rating="4">★</span>
+                                <span class="star active" data-rating="5">★</span>
+                            </div>
+                        </div>
+                        <button class="submit-comment-btn" onclick="submitComment()">发表评论</button>
+                    </div>
+                </div>
+
+                <!-- 评论列表 -->
+                <div id="commentList" class="comment-list">
+                    <!-- 评论将在这里动态加载 -->
+                </div>
+
+                <!-- 分页 -->
+                <div class="comment-pagination">
+                    <button onclick="loadComments(-1)" id="prevCommentBtn">上一页</button>
+                    <span id="commentPageInfo">第 1 页</span>
+                    <button onclick="loadComments(1)" id="nextCommentBtn">下一页</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -577,6 +895,7 @@
     <div id="paymentModal" class="payment-modal">
         <div class="payment-content">
             <h3 class="payment-title">请扫码支付</h3>
+            <div class="payment-ticket-info" id="paymentTicketInfo"></div>
             <div class="payment-amount" id="paymentAmount">¥0.00</div>
             <div class="payment-qrcode">
                 <img src="/skm.png" alt="收款码">
@@ -606,6 +925,8 @@
         let currentSiteId = null;
         let currentOrderId = null;
         let currentTicketInfo = null;
+        let currentRating = 5;
+        let commentPage = 0;
         const token = localStorage.getItem('token');
         console.log('token:', token);
 
@@ -634,6 +955,8 @@
             console.log('准备调用loadTickets');
             loadSiteDetail(siteId, token);
             loadTickets(siteId, token);
+            loadComments(0);
+            initStarRating();
             console.log('WINDOW ONLOAD END');
         };
 
@@ -750,6 +1073,11 @@
                                 <div class="ticket-price">¥${price}</div>
                                 ${ticket.originalPrice ? `<div class="ticket-original-price">¥${ticket.originalPrice}</div>` : ''}
                             </div>
+                            <div class="quantity-selector">
+                                <button class="quantity-btn" onclick="changeQuantity(${id}, -1)">-</button>
+                                <span class="quantity-display" id="quantity-${id}">1</span>
+                                <button class="quantity-btn" onclick="changeQuantity(${id}, 1)">+</button>
+                            </div>
                             <button class="buy-btn" onclick="buyTicket(${id}, '${name}', ${price})">立即购买</button>
                         </div>
                     `}).join('');
@@ -766,6 +1094,16 @@
             });
         }
 
+        // 修改门票数量
+        function changeQuantity(ticketId, delta) {
+            const display = document.getElementById(`quantity-${ticketId}`);
+            let quantity = parseInt(display.textContent) || 1;
+            quantity += delta;
+            if (quantity < 1) quantity = 1;
+            if (quantity > 99) quantity = 99;
+            display.textContent = quantity;
+        }
+
         // 购买门票
         function buyTicket(ticketId, ticketName, ticketPrice) {
             console.log('buyTicket参数:', { ticketId, ticketName, ticketPrice });
@@ -776,7 +1114,10 @@
                 return;
             }
             
-            currentTicketInfo = { ticketId, ticketName, ticketPrice, quantity: 1 };
+            // 获取选择的数量
+            const quantity = parseInt(document.getElementById(`quantity-${ticketId}`).textContent) || 1;
+            
+            currentTicketInfo = { ticketId, ticketName, ticketPrice, quantity };
             
             fetch('/order/create', {
                 method: 'POST',
@@ -784,7 +1125,7 @@
                     'token': token,
                     'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                body: `ticketId=${ticketId}&quantity=1`
+                body: `ticketId=${ticketId}&quantity=${quantity}`
             })
             .then(response => response.json())
             .then(result => {
@@ -795,6 +1136,11 @@
                         orderData = parseData(orderData);
                     }
                     currentOrderId = orderData.orderId;
+                    // 显示门票信息
+                    document.getElementById('paymentTicketInfo').innerHTML = `
+                        <div class="ticket-name">${currentTicketInfo.ticketName}</div>
+                        <div class="ticket-quantity">数量：${currentTicketInfo.quantity}张 × ¥${currentTicketInfo.ticketPrice}</div>
+                    `;
                     document.getElementById('paymentAmount').textContent = '¥' + (orderData.totalPrice || 0);
                     document.getElementById('paymentModal').classList.add('active');
                 } else {
@@ -961,6 +1307,171 @@
         function closeModal() {
             const modal = document.getElementById('imageModal');
             modal.classList.remove('active');
+        }
+
+        // 初始化星级评分
+        function initStarRating() {
+            const stars = document.querySelectorAll('#starRating .star');
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    currentRating = parseInt(this.dataset.rating);
+                    updateStars(currentRating);
+                });
+                star.addEventListener('mouseenter', function() {
+                    updateStars(parseInt(this.dataset.rating));
+                });
+            });
+            document.getElementById('starRating').addEventListener('mouseleave', function() {
+                updateStars(currentRating);
+            });
+        }
+
+        function updateStars(rating) {
+            const stars = document.querySelectorAll('#starRating .star');
+            stars.forEach(star => {
+                if (parseInt(star.dataset.rating) <= rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+
+        // 加载评论
+        function loadComments(pageDelta) {
+            if (pageDelta === 0) {
+                commentPage = 0;
+            } else {
+                commentPage += pageDelta;
+                if (commentPage < 0) commentPage = 0;
+            }
+
+            fetch(`/comment/list?siteId=${currentSiteId}&start=${commentPage * 10}`, {
+                headers: { 'token': token }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    let comments = result.data;
+                    if (typeof comments === 'string') {
+                        comments = parseData(comments);
+                    }
+                    renderComments(comments);
+                    updateCommentCount();
+                }
+            })
+            .catch(error => {
+                console.error('加载评论失败:', error);
+            });
+        }
+
+        // 渲染评论列表
+        function renderComments(comments) {
+            const commentList = document.getElementById('commentList');
+
+            if (!comments || comments.length === 0) {
+                commentList.innerHTML = `
+                    <div class="no-comments">
+                        <div class="icon">💬</div>
+                        <p>暂无评论，快来发表第一条评论吧！</p>
+                    </div>
+                `;
+                document.getElementById('prevCommentBtn').disabled = true;
+                document.getElementById('nextCommentBtn').disabled = true;
+                return;
+            }
+
+            commentList.innerHTML = comments.map(comment => {
+                const date = new Date(comment.create_time).toLocaleString('zh-CN');
+                const stars = '★'.repeat(comment.rating) + '☆'.repeat(5 - comment.rating);
+                const avatar = comment.username ? comment.username.charAt(0).toUpperCase() : 'U';
+                return `
+                    <div class="comment-item">
+                        <div class="comment-header">
+                            <div class="comment-user">
+                                <div class="comment-avatar">${avatar}</div>
+                                <span class="comment-username">${comment.username}</span>
+                            </div>
+                            <div>
+                                <span class="comment-rating">${stars}</span>
+                                <span class="comment-time">${date}</span>
+                            </div>
+                        </div>
+                        <div class="comment-content">${comment.content}</div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('prevCommentBtn').disabled = commentPage === 0;
+            document.getElementById('nextCommentBtn').disabled = comments.length < 10;
+            document.getElementById('commentPageInfo').textContent = `第 ${commentPage + 1} 页`;
+        }
+
+        // 更新评论数量
+        function updateCommentCount() {
+            fetch(`/comment/count?siteId=${currentSiteId}`, {
+                headers: { 'token': token }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    document.getElementById('commentCount').textContent = result.data;
+                }
+            });
+        }
+
+        // 发表评论
+        function submitComment() {
+            const content = document.getElementById('commentContent').value.trim();
+
+            if (!content) {
+                alert('请输入评论内容');
+                return;
+            }
+
+            const btn = document.querySelector('.submit-comment-btn');
+            btn.disabled = true;
+            btn.textContent = '发表中...';
+
+            fetch('/comment/add', {
+                method: 'POST',
+                headers: {
+                    'token': token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    site_id: parseInt(currentSiteId),
+                    content: content,
+                    rating: currentRating
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                btn.disabled = false;
+                btn.textContent = '发表评论';
+
+                if (result.code === 1) {
+                    alert('评论成功！');
+                    document.getElementById('commentContent').value = '';
+                    currentRating = 5;
+                    updateStars(5);
+                    loadComments(0);
+                } else {
+                    alert(result.data || '评论失败');
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.textContent = '发表评论';
+                console.error('发表评论失败:', error);
+                alert('发表评论失败');
+            });
+        }
+
+        // 跳转到农特产页面
+        function goToAgriProducts() {
+            const siteName = document.getElementById('siteName').textContent;
+            window.location.href = `/agri-products.html?site_id=${currentSiteId}&site_name=${encodeURIComponent(siteName)}`;
         }
 
         // 退出登录

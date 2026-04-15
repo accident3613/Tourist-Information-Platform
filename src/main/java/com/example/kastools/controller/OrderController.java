@@ -51,4 +51,9 @@ public class OrderController {
         result.setData(JSON.toJSONString(orders));
         return result;
     }
+
+    @PostMapping("/cancel")
+    public Result cancel(@RequestParam("orderId") String orderId) {
+        return orderService.cancelOrder(orderId);
+    }
 }

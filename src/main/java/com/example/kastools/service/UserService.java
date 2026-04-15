@@ -23,4 +23,8 @@ public interface UserService {
     boolean addCollection(HttpServletRequest request, int siteId);
 
     boolean deleteCollection(HttpServletRequest request, int siteId);
+
+    List<User> getAllUsers();
+
+    Result toggleUserStatus(String username, Integer status);
 }

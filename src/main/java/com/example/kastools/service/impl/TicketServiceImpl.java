@@ -23,4 +23,32 @@ public class TicketServiceImpl implements TicketService {
     public Ticket getTicketById(Long ticketId) {
         return ticketMapper.findById(ticketId);
     }
+
+    @Override
+    public List<Ticket> getAllTickets() {
+        return ticketMapper.findAll();
+    }
+
+    @Override
+    public List<Ticket> getTicketsBySiteIdAll(Long siteId) {
+        return ticketMapper.findBySiteIdAll(siteId);
+    }
+
+    @Override
+    public Ticket saveTicket(Ticket ticket) {
+        if (ticket.getStatus() == null) {
+            ticket.setStatus(1);
+        }
+        if (ticket.getId() == null) {
+            ticketMapper.insert(ticket);
+        } else {
+            ticketMapper.update(ticket);
+        }
+        return ticket;
+    }
+
+    @Override
+    public void toggleTicketStatus(Long id) {
+        ticketMapper.toggleStatus(id);
+    }
 }

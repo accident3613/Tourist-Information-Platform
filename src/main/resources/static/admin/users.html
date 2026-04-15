@@ -23,12 +23,6 @@
             </tr>
         </tbody>
     </table>
-
-    <div style="display: flex; justify-content: center; margin-top: 20px; gap: 10px;">
-        <button class="btn" onclick="prevPage()" style="background: rgba(255,255,255,0.1); color: #fff;">上一页</button>
-        <span id="pageInfo" style="color: #888; line-height: 32px;">第 1 页</span>
-        <button class="btn" onclick="nextPage()" style="background: rgba(255,255,255,0.1); color: #fff;">下一页</button>
-    </div>
 </div>
 
 <!-- 用户详情弹窗 -->
@@ -45,106 +39,117 @@
 </div>
 
 <script>
-let currentPage = 1;
-let allUsers = [];
+(function() {
+    let allUsers = [];
 
-function usersInit() {
-    loadUsers();
-}
-
-function loadUsers() {
-    const adminToken = localStorage.getItem('adminToken');
-    // 由于没有用户列表接口，这里使用模拟数据
-    allUsers = [
-        { username: 'user1', name: '张三', status: 1 },
-        { username: 'user2', name: '李四', status: 1 },
-        { username: 'user3', name: '王五', status: 0 }
-    ];
-    renderUsers();
-}
-
-function renderUsers() {
-    const search = document.getElementById('searchInput').value.toLowerCase();
-    let filtered = allUsers;
-    if (search) {
-        filtered = allUsers.filter(u => 
-            u.username.toLowerCase().includes(search) || 
-            (u.name && u.name.toLowerCase().includes(search))
-        );
-    }
-
-    const tbody = document.getElementById('usersTable');
-    if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">暂无数据</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = filtered.map(user => {
-        const statusClass = user.status === 1 ? 'status-active' : 'status-inactive';
-        const statusText = user.status === 1 ? '正常' : '禁用';
-        return `
-            <tr>
-                <td>${user.username}</td>
-                <td>${user.name || '-'}</td>
-                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td>
-                    <div class="action-btns">
-                        <button class="action-btn edit" onclick="viewUser('${user.username}')">查看</button>
-                        <button class="action-btn ${user.status === 1 ? 'delete' : 'edit'}" onclick="toggleUserStatus('${user.username}', ${user.status})">
-                            ${user.status === 1 ? '禁用' : '启用'}
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
-function searchUsers() {
-    currentPage = 1;
-    renderUsers();
-}
-
-function viewUser(username) {
-    const user = allUsers.find(u => u.username === username);
-    if (!user) return;
-
-    document.getElementById('userDetailContent').innerHTML = `
-        <p><strong>用户名：</strong>${user.username}</p>
-        <p><strong>昵称：</strong>${user.name || '-'}</p>
-        <p><strong>状态：</strong>${user.status === 1 ? '正常' : '禁用'}</p>
-    `;
-    document.getElementById('userModal').style.display = 'flex';
-}
-
-function closeUserModal() {
-    document.getElementById('userModal').style.display = 'none';
-}
-
-function toggleUserStatus(username, currentStatus) {
-    const action = currentStatus === 1 ? '禁用' : '启用';
-    if (!confirm(`确定要${action}用户 ${username} 吗？`)) return;
-
-    // 这里需要调用后端接口
-    alert(`${action}成功`);
-    const user = allUsers.find(u => u.username === username);
-    if (user) {
-        user.status = currentStatus === 1 ? 0 : 1;
-        renderUsers();
-    }
-}
-
-function prevPage() {
-    if (currentPage > 1) {
-        currentPage--;
-        document.getElementById('pageInfo').textContent = `第 ${currentPage} 页`;
+    window.usersInit = function() {
         loadUsers();
-    }
-}
+    };
 
-function nextPage() {
-    currentPage++;
-    document.getElementById('pageInfo').textContent = `第 ${currentPage} 页`;
-    loadUsers();
-}
+    window.loadUsers = function() {
+        const adminToken = localStorage.getItem('adminToken');
+        fetch('/admin/users', {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                allUsers = JSON.parse(result.data);
+                renderUsers();
+            } else {
+                document.getElementById('usersTable').innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">加载失败</td></tr>';
+            }
+        })
+        .catch(() => {
+            document.getElementById('usersTable').innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">加载失败</td></tr>';
+        });
+    };
+
+    window.renderUsers = function() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        let filtered = allUsers;
+        if (search) {
+            filtered = allUsers.filter(u => 
+                u.username.toLowerCase().includes(search) || 
+                (u.name && u.name.toLowerCase().includes(search))
+            );
+        }
+
+        const tbody = document.getElementById('usersTable');
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">暂无数据</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(user => {
+            const statusClass = user.status === 1 ? 'status-active' : 'status-inactive';
+            const statusText = user.status === 1 ? '正常' : '禁用';
+            return `
+                <tr>
+                    <td>${user.username}</td>
+                    <td>${user.name || '-'}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="action-btn edit" onclick="viewUser('${user.username}')">查看</button>
+                            <button class="action-btn ${user.status === 1 ? 'delete' : 'edit'}" onclick="toggleUserStatus('${user.username}', ${user.status})">
+                                ${user.status === 1 ? '禁用' : '启用'}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    };
+
+    window.searchUsers = function() {
+        renderUsers();
+    };
+
+    window.viewUser = function(username) {
+        const user = allUsers.find(u => u.username === username);
+        if (!user) return;
+
+        document.getElementById('userDetailContent').innerHTML = `
+            <p><strong>用户名：</strong>${user.username}</p>
+            <p><strong>昵称：</strong>${user.name || '-'}</p>
+            <p><strong>状态：</strong>${user.status === 1 ? '正常' : '禁用'}</p>
+        `;
+        document.getElementById('userModal').style.display = 'flex';
+    };
+
+    window.closeUserModal = function() {
+        document.getElementById('userModal').style.display = 'none';
+    };
+
+    window.toggleUserStatus = function(username, currentStatus) {
+        const newStatus = currentStatus === 1 ? 0 : 1;
+        const action = currentStatus === 1 ? '禁用' : '启用';
+        if (!confirm(`确定要${action}用户 ${username} 吗？`)) return;
+
+        const adminToken = localStorage.getItem('adminToken');
+        fetch('/admin/user/status', {
+            method: 'PUT',
+            headers: {
+                'token': adminToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username: username, status: newStatus })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                alert(`${action}成功`);
+                const user = allUsers.find(u => u.username === username);
+                if (user) {
+                    user.status = newStatus;
+                    renderUsers();
+                }
+            } else {
+                alert(result.data || `${action}失败`);
+            }
+        })
+        .catch(() => alert(`${action}失败`));
+    };
+})();
 </script>

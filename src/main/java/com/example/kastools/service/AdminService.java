@@ -17,4 +17,5 @@ public interface AdminService {
     Result resetPassword(Long id, String newPassword);
     Result getLogs(int limit);
     void addLog(Long adminId, String adminUsername, String action, String targetType, String targetId, String detail, String ip);
+    Result getStats();
 }

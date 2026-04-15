@@ -309,6 +309,133 @@
             color: white;
         }
 
+        .status-expired {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .status-used {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .expire-info {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .expire-warning {
+            color: #ff9800;
+        }
+
+        .expire-danger {
+            color: #f44336;
+        }
+
+        .expire-normal {
+            color: #4CAF50;
+        }
+
+        .used-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+
+        .used-tag-unused {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .used-tag-used {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .used-tag-expired {
+            background-color: #f44336;
+            color: white;
+        }
+
+        /* 收藏列表样式 */
+        .collection-section {
+            margin-top: 30px;
+        }
+
+        .collection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .btn-collection {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-collection:hover {
+            background-color: #45a049;
+        }
+
+        .collection-list {
+            background-color: #3a3a3a;
+            border-radius: 12px;
+            border: 1px solid #4a4a4a;
+            padding: 20px;
+            display: none;
+        }
+
+        .collection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .collection-item {
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #4a4a4a;
+        }
+
+        .collection-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border-color: #4CAF50;
+        }
+
+        .collection-image {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .collection-name {
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .collection-rating {
+            font-size: 12px;
+            color: #4CAF50;
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -427,6 +554,22 @@
             <div class="empty-state">
                 <div class="empty-state-icon">📋</div>
                 <p>加载中...</p>
+            </div>
+        </div>
+
+        <!-- 收藏列表 -->
+        <div class="collection-section">
+            <div class="collection-header">
+                <h2 class="section-title">我的收藏</h2>
+                <button class="btn-collection" id="collectionBtn" onclick="toggleCollections()">
+                    <span id="collectionText">展开收藏</span>
+                </button>
+            </div>
+            <div class="collection-list" id="collectionList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">❤️</div>
+                    <p>加载中...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -617,15 +760,57 @@
                 const statusClass = getStatusClass(order.status);
                 const statusText = getStatusText(order.status);
                 const date = new Date(order.created_at).toLocaleString('zh-CN');
+                
+                // 处理过期时间和使用状态
+                let expireInfo = '';
+                let usedTag = '';
+                const used = order.used !== undefined ? order.used : 0;
+                const expireDate = order.expire_date ? new Date(order.expire_date) : null;
+                const now = new Date();
+                
+                // 判断是否过期
+                const isExpired = expireDate && expireDate < now;
+                
+                // 使用状态标签
+                if (order.status === 'confirmed') {
+                    if (used === 1) {
+                        usedTag = '<span class="used-tag used-tag-used">已使用</span>';
+                    } else if (used === 2 || isExpired) {
+                        usedTag = '<span class="used-tag used-tag-expired">已过期</span>';
+                    } else {
+                        usedTag = '<span class="used-tag used-tag-unused">未使用</span>';
+                    }
+                }
+                
+                // 过期时间显示
+                if (expireDate && order.status === 'confirmed') {
+                    const expireDateStr = expireDate.toLocaleString('zh-CN');
+                    let expireClass = 'expire-normal';
+                    let expirePrefix = '有效期至：';
+                    
+                    if (isExpired) {
+                        expireClass = 'expire-danger';
+                        expirePrefix = '已于';
+                    } else {
+                        const daysLeft = Math.ceil((expireDate - now) / (1000 * 60 * 60 * 24));
+                        if (daysLeft <= 3) {
+                            expireClass = 'expire-warning';
+                        }
+                    }
+                    
+                    expireInfo = `<p class="expire-info ${expireClass}">${expirePrefix}${expireDateStr}</p>`;
+                }
+                
                 const payButton = order.status === 'pending' ? 
                     `<button class="btn btn-primary" onclick="payOrder('${order.order_id}', ${order.price})" style="margin-left: 10px;">去支付</button>` : '';
 
                 return `
                     <div class="order-item">
                         <div class="order-info">
-                            <h4>订单号：${order.order_no || order.order_id}</h4>
+                            <h4>订单号：${order.order_no || order.order_id}${usedTag}</h4>
                             <p>下单时间：${date}</p>
                             <p>支付方式：${order.payment_method || '未支付'}</p>
+                            ${expireInfo}
                         </div>
                         <div style="display: flex; align-items: center;">
                             <div class="order-price">¥${order.price || 0}</div>
@@ -715,6 +900,9 @@
         }
 
         // 加载收藏数量
+        let collectionExpanded = false;
+        let collectionLoaded = false;
+        
         function loadFavorites() {
             fetch('/user/colist', {
                 method: 'POST',
@@ -727,6 +915,133 @@
                 }
             })
             .catch(error => console.error('获取收藏失败:', error));
+        }
+
+        // 切换收藏列表显示
+        function toggleCollections() {
+            const collectionList = document.getElementById('collectionList');
+            const collectionText = document.getElementById('collectionText');
+            
+            if (collectionExpanded) {
+                collectionList.style.display = 'none';
+                collectionText.textContent = '展开收藏';
+                collectionExpanded = false;
+            } else {
+                collectionList.style.display = 'block';
+                collectionText.textContent = '收起收藏';
+                collectionExpanded = true;
+                
+                if (!collectionLoaded) {
+                    loadCollectionList();
+                    collectionLoaded = true;
+                }
+            }
+        }
+
+        // 加载收藏列表详情
+        function loadCollectionList() {
+            const collectionList = document.getElementById('collectionList');
+            collectionList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><p>加载中...</p></div>';
+            
+            fetch('/user/colist', {
+                method: 'POST',
+                headers: { 'token': token }
+            })
+            .then(response => response.json())
+            .then(siteIds => {
+                if (!siteIds || siteIds.length === 0) {
+                    collectionList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❤️</div><p>暂无收藏，快去收藏景点吧！</p></div>';
+                    return;
+                }
+                
+                // 获取每个景点的详情
+                const sitePromises = siteIds.map(siteId => 
+                    fetch('/site/list1', {
+                        method: 'POST',
+                        headers: {
+                            'token': token,
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `site_id=${siteId}`
+                    }).then(response => response.json())
+                );
+                
+                Promise.all(sitePromises)
+                    .then(sites => {
+                        displayCollections(sites);
+                    })
+                    .catch(error => {
+                        console.error('获取景点信息失败:', error);
+                        collectionList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><p>加载失败</p></div>';
+                    });
+            })
+            .catch(error => {
+                console.error('获取收藏列表失败:', error);
+                collectionList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><p>加载失败</p></div>';
+            });
+        }
+
+        // 显示收藏列表
+        function displayCollections(sites) {
+            const collectionList = document.getElementById('collectionList');
+            
+            if (!sites || sites.length === 0) {
+                collectionList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❤️</div><p>暂无收藏</p></div>';
+                return;
+            }
+            
+            const collectionHTML = sites.map(site => {
+                const iconFileName = site.icon ? site.icon.split('/').pop() : null;
+                
+                return `
+                    <div class="collection-item" onclick="goToSite(${site.id})">
+                        <img class="collection-image" 
+                             data-icon="${iconFileName}" 
+                             data-token="${token}"
+                             src="/icon/1.png" 
+                             alt="${site.name || '景点'}">
+                        <div class="collection-name">${site.name || '未知景点'}</div>
+                        <div class="collection-rating">★ ${site.rating || '0.0'}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            collectionList.innerHTML = `<div class="collection-grid">${collectionHTML}</div>`;
+            
+            // 加载所有景点图片
+            const images = collectionList.querySelectorAll('.collection-image');
+            images.forEach(img => {
+                if (img.dataset.icon) {
+                    loadSiteIcon(img);
+                }
+            });
+        }
+
+        // 加载景点图片
+        function loadSiteIcon(imgElement) {
+            const iconFileName = imgElement.dataset.icon;
+            const token = imgElement.dataset.token;
+            
+            if (!iconFileName) return;
+            
+            fetch(`/sicon?filePath=${iconFileName}`, {
+                method: 'GET',
+                headers: { 'token': token }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('图片加载失败');
+                return response.blob();
+            })
+            .then(blob => {
+                const imageUrl = URL.createObjectURL(blob);
+                imgElement.src = imageUrl;
+            })
+            .catch(error => console.error('加载景点图片失败:', error));
+        }
+
+        // 跳转到景点详情
+        function goToSite(siteId) {
+            window.location.href = `/site-detail.html?site_id=${siteId}`;
         }
 
         // 编辑资料

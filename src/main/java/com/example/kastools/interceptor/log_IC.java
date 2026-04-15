@@ -4,7 +4,6 @@ import com.example.kastools.mapper.UsrMap;
 import com.example.kastools.properties.Jwtpro;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +11,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
+
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class log_IC implements HandlerInterceptor {
@@ -60,7 +61,7 @@ public class log_IC implements HandlerInterceptor {
         }
         try {
             Claims claims = Jwts.parser()
-                    .setSigningKey(Keys.hmacShaKeyFor(Jwtpro.secret_key.getBytes()))
+                    .setSigningKey(Jwtpro.secret_key.getBytes(StandardCharsets.UTF_8))
                     .build()
                     .parseClaimsJws(jwt)
                     .getBody();

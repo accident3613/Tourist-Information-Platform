@@ -9,4 +9,12 @@ public interface TicketService {
     List<Ticket> getTicketsBySiteId(Long siteId);
 
     Ticket getTicketById(Long ticketId);
+
+    List<Ticket> getAllTickets();
+
+    List<Ticket> getTicketsBySiteIdAll(Long siteId);
+
+    Ticket saveTicket(Ticket ticket);
+
+    void toggleTicketStatus(Long id);
 }

@@ -13,7 +13,11 @@ public interface OrderService {
 
     Result confirmPayment(String orderId);
 
+    Result cancelOrder(String orderId);
+
     Map<String, Object> getOrderDetail(String orderId);
 
     List<Map<String, Object>> getUserOrders(HttpServletRequest request);
+
+    List<Map<String, Object>> getAllOrders();
 }

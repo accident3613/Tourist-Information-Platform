@@ -2,7 +2,10 @@
 <div class="content-card">
     <div class="card-header">
         <h3 class="card-title">景点列表</h3>
-        <button class="btn btn-primary" onclick="openAddSiteModal()">+ 新增景点</button>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" onclick="openImportSiteModal()" style="background: rgba(255,255,255,0.1); color: #fff;">批量导入</button>
+            <button class="btn btn-primary" onclick="openAddSiteModal()">+ 新增景点</button>
+        </div>
     </div>
 
     <table class="data-table">
@@ -11,7 +14,7 @@
                 <th>ID</th>
                 <th>景点名称</th>
                 <th>评分</th>
-                <th>收藏数</th>
+                <th>总票数</th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -21,6 +24,29 @@
             </tr>
         </tbody>
     </table>
+</div>
+
+<!-- 批量导入景点弹窗 -->
+<div id="importSiteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: #1a1a2e; border-radius: 12px; padding: 30px; width: 90%; max-width: 500px; border: 1px solid rgba(255,255,255,0.1);">
+        <h3 style="color: #4CAF50; margin-bottom: 20px;">批量导入景点</h3>
+        <div style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+            <p style="color: #888; margin-bottom: 10px;">请上传CSV文件，文件格式要求：</p>
+            <ul style="color: #aaa; font-size: 13px; margin-left: 20px;">
+                <li>第一行为表头，从第二行开始为数据</li>
+                <li>必填列：景点名称</li>
+                <li>可选列：描述、评分、景区评分、浏览量、图标</li>
+            </ul>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <input type="file" id="siteImportFile" accept=".csv" style="color: #fff;">
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" onclick="closeImportSiteModal()" style="flex: 1; background: rgba(255,255,255,0.1); color: #fff;">取消</button>
+            <button class="btn btn-primary" onclick="importSites()" style="flex: 1;">导入</button>
+        </div>
+        <div id="siteImportResult" style="margin-top: 15px; display: none;"></div>
+    </div>
 </div>
 
 <!-- 新增/编辑景点弹窗 -->
@@ -51,127 +77,219 @@
 </div>
 
 <script>
-let editingSiteId = null;
+(function() {
+    let editingSiteId = null;
 
-function sitesInit() {
-    loadSites();
-}
+    window.sitesInit = function() {
+        loadSites();
+    };
 
-function loadSites() {
-    const adminToken = localStorage.getItem('adminToken');
-    fetch('/site', {
-        headers: { 'token': adminToken }
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.code === 1) {
-            const sites = JSON.parse(result.data);
-            renderSites(sites);
+    window.openImportSiteModal = function() {
+        document.getElementById('siteImportFile').value = '';
+        document.getElementById('siteImportResult').style.display = 'none';
+        document.getElementById('importSiteModal').style.display = 'flex';
+    };
+
+    window.closeImportSiteModal = function() {
+        document.getElementById('importSiteModal').style.display = 'none';
+    };
+
+    window.importSites = function() {
+        const fileInput = document.getElementById('siteImportFile');
+        const file = fileInput.files[0];
+        if (!file) {
+            alert('请选择文件');
+            return;
         }
-    })
-    .catch(() => {
-        document.getElementById('sitesTable').innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">加载失败</td></tr>';
-    });
-}
 
-function renderSites(sites) {
-    const tbody = document.getElementById('sitesTable');
-    if (sites.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">暂无景点</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = sites.map(site => `
-        <tr>
-            <td>${site.id}</td>
-            <td>${site.name}</td>
-            <td>${site.rating || 0}</td>
-            <td>${site.number || 0}</td>
-            <td>
-                <div class="action-btns">
-                    <button class="action-btn edit" onclick="editSite(${site.id}, '${site.name}', ${site.rating}, '${site.description || ''}')">编辑</button>
-                    <button class="action-btn delete" onclick="deleteSite(${site.id}, '${site.name}')">删除</button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function openAddSiteModal() {
-    editingSiteId = null;
-    document.getElementById('siteModalTitle').textContent = '新增景点';
-    document.getElementById('siteName').value = '';
-    document.getElementById('siteRating').value = '';
-    document.getElementById('siteDesc').value = '';
-    document.getElementById('siteImage').value = '';
-    document.getElementById('siteModal').style.display = 'flex';
-}
-
-function editSite(id, name, rating, description) {
-    editingSiteId = id;
-    document.getElementById('siteModalTitle').textContent = '编辑景点';
-    document.getElementById('siteName').value = name;
-    document.getElementById('siteRating').value = rating || '';
-    document.getElementById('siteDesc').value = description || '';
-    document.getElementById('siteImage').value = '';
-    document.getElementById('siteModal').style.display = 'flex';
-}
-
-function closeSiteModal() {
-    document.getElementById('siteModal').style.display = 'none';
-}
-
-function saveSite() {
-    const name = document.getElementById('siteName').value.trim();
-    const rating = document.getElementById('siteRating').value;
-    const description = document.getElementById('siteDesc').value.trim();
-    const imageFile = document.getElementById('siteImage').files[0];
-
-    if (!name) {
-        alert('请输入景点名称');
-        return;
-    }
-
-    const adminToken = localStorage.getItem('adminToken');
-
-    // 如果有图片，先上传图片
-    if (imageFile) {
+        const adminToken = localStorage.getItem('adminToken');
         const formData = new FormData();
-        formData.append('file', imageFile);
+        formData.append('file', file);
 
-        fetch('/upload', {
+        fetch('/admin/excel/import/sites', {
             method: 'POST',
             headers: { 'token': adminToken },
             body: formData
         })
-        .then(response => response.text())
+        .then(response => response.json())
         .then(result => {
-            if (result.includes('successfully')) {
-                // 图片上传成功，保存景点信息
-                saveSiteInfo(name, rating, description);
+            const resultDiv = document.getElementById('siteImportResult');
+            resultDiv.style.display = 'block';
+            if (result.code === 1) {
+                const data = JSON.parse(result.data);
+                resultDiv.innerHTML = `
+                    <div style="padding: 15px; background: rgba(76, 175, 80, 0.2); border-radius: 8px; color: #4CAF50;">
+                        <p>导入完成！成功: ${data.success} 条，失败: ${data.failed} 条</p>
+                        ${data.errors && data.errors.length > 0 ? 
+                            '<details><summary style="cursor: pointer; margin-top: 10px;">查看错误详情</summary><ul style="margin-top: 10px; font-size: 12px;">' + 
+                            data.errors.map(e => '<li>' + e + '</li>').join('') + '</ul></details>' : ''}
+                    </div>
+                `;
+                loadSites();
             } else {
-                alert('图片上传失败');
+                resultDiv.innerHTML = `<div style="padding: 15px; background: rgba(244, 67, 54, 0.2); border-radius: 8px; color: #f44336;">${result.data}</div>`;
             }
         })
-        .catch(() => alert('图片上传失败'));
-    } else {
-        saveSiteInfo(name, rating, description);
-    }
-}
+        .catch(() => {
+            const resultDiv = document.getElementById('siteImportResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `<div style="padding: 15px; background: rgba(244, 67, 54, 0.2); border-radius: 8px; color: #f44336;">导入失败</div>`;
+        });
+    };
 
-function saveSiteInfo(name, rating, description) {
-    // 这里需要调用后端接口保存景点信息
-    alert('保存成功');
-    closeSiteModal();
-    loadSites();
-}
+    window.loadSites = function() {
+        const adminToken = localStorage.getItem('adminToken');
+        fetch('/site/list?start=0', {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(sites => {
+            if (sites && sites.length > 0) {
+                renderSites(sites);
+            } else {
+                document.getElementById('sitesTable').innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">暂无数据</td></tr>';
+            }
+        })
+        .catch(() => {
+            document.getElementById('sitesTable').innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">加载失败</td></tr>';
+        });
+    };
 
-function deleteSite(id, name) {
-    if (!confirm(`确定要删除景点 "${name}" 吗？`)) return;
+    window.renderSites = function(sites) {
+        const tbody = document.getElementById('sitesTable');
+        if (sites.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">暂无景点</td></tr>';
+            return;
+        }
 
-    const adminToken = localStorage.getItem('adminToken');
-    // 这里需要调用后端接口删除景点
-    alert('删除成功');
-    loadSites();
-}
+        tbody.innerHTML = sites.map(site => `
+            <tr>
+                <td>${site.id}</td>
+                <td>${site.name}</td>
+                <td>${site.rating || 0}</td>
+                <td>${site.number || 0}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="action-btn edit" onclick="editSite(${site.id}, '${site.name}', ${site.rating}, '${site.description || ''}')">编辑</button>
+                        <button class="action-btn delete" onclick="deleteSite(${site.id}, '${site.name}')">删除</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    };
+
+    window.openAddSiteModal = function() {
+        editingSiteId = null;
+        document.getElementById('siteModalTitle').textContent = '新增景点';
+        document.getElementById('siteName').value = '';
+        document.getElementById('siteRating').value = '';
+        document.getElementById('siteDesc').value = '';
+        document.getElementById('siteImage').value = '';
+        document.getElementById('siteModal').style.display = 'flex';
+    };
+
+    window.editSite = function(id, name, rating, description) {
+        editingSiteId = id;
+        document.getElementById('siteModalTitle').textContent = '编辑景点';
+        document.getElementById('siteName').value = name;
+        document.getElementById('siteRating').value = rating || '';
+        document.getElementById('siteDesc').value = description || '';
+        document.getElementById('siteImage').value = '';
+        document.getElementById('siteModal').style.display = 'flex';
+    };
+
+    window.closeSiteModal = function() {
+        document.getElementById('siteModal').style.display = 'none';
+    };
+
+    window.saveSite = function() {
+        const name = document.getElementById('siteName').value.trim();
+        const rating = document.getElementById('siteRating').value;
+        const description = document.getElementById('siteDesc').value.trim();
+        const imageFile = document.getElementById('siteImage').files[0];
+
+        if (!name) {
+            alert('请输入景点名称');
+            return;
+        }
+
+        const adminToken = localStorage.getItem('adminToken');
+
+        if (imageFile) {
+            const formData = new FormData();
+            formData.append('file', imageFile);
+
+            fetch('/upload', {
+                method: 'POST',
+                headers: { 'token': adminToken },
+                body: formData
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result.includes('successfully')) {
+                    saveSiteInfo(name, rating, description);
+                } else {
+                    alert('图片上传失败');
+                }
+            })
+            .catch(() => alert('图片上传失败'));
+        } else {
+            saveSiteInfo(name, rating, description);
+        }
+    };
+
+    window.saveSiteInfo = function(name, rating, description) {
+        const adminToken = localStorage.getItem('adminToken');
+        const data = {
+            name: name,
+            rating: parseFloat(rating) || 0,
+            description: description,
+            arating: 0,
+            number: 0
+        };
+        if (editingSiteId) {
+            data.id = editingSiteId;
+        }
+
+        fetch('/site/admin/save', {
+            method: 'POST',
+            headers: {
+                'token': adminToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                alert('保存成功');
+                closeSiteModal();
+                loadSites();
+            } else {
+                alert(result.data || '保存失败');
+            }
+        })
+        .catch(() => alert('保存失败'));
+    };
+
+    window.deleteSite = function(id, name) {
+        if (!confirm(`确定要删除景点 "${name}" 吗？`)) return;
+
+        const adminToken = localStorage.getItem('adminToken');
+        fetch('/site/admin/delete/' + id, {
+            method: 'DELETE',
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                alert('删除成功');
+                loadSites();
+            } else {
+                alert(result.data || '删除失败');
+            }
+        })
+        .catch(() => alert('删除失败'));
+    };
+})();
 </script>

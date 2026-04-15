@@ -1,0 +1,9 @@
+账号,密码,姓名,角色,所属景点ID,状态
+zhangsan,123456,张三,operator,1,1
+lisi,123456,李四,operator,2,1
+wangwu,123456,王五,admin,,1
+zhaoliu,123456,赵六,operator,3,1
+sunqi,123456,孙七,operator,4,0
+zhouba,123456,周八,operator,5,1
+wujiu,123456,吴九,operator,6,1
+zhengshi,123456,郑十,operator,7,1

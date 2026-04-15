@@ -174,4 +174,23 @@ public class UserServiceImpl implements UserService {
         String username = jwt.getusn(token);
         return siteMap.col_del(username, siteId);
     }
+
+    @Override
+    public List<User> getAllUsers() {
+        return usrMap.findAllUsers();
+    }
+
+    @Override
+    public Result toggleUserStatus(String username, Integer status) {
+        Result result = new Result();
+        boolean success = usrMap.lggmap(status, username);
+        if (success) {
+            result.setCode(1);
+            result.setData("状态更新成功");
+        } else {
+            result.setCode(0);
+            result.setData("状态更新失败");
+        }
+        return result;
+    }
 }

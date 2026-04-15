@@ -15,6 +15,7 @@ public class Admin {
     private String password;
     private String name;
     private String role;
+    private Long site_id;
     private Integer status;
     private LocalDateTime lastLoginTime;
     private LocalDateTime createTime;

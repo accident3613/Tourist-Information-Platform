@@ -6,8 +6,8 @@
     </div>
 
     <div style="margin-bottom: 15px;">
-        <select id="siteFilter" onchange="loadTickets()" style="padding: 8px 12px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;">
-            <option value="">全部景点</option>
+        <select id="siteFilter" onchange="loadTickets()" style="padding: 8px 12px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: #16213e; color: #fff;">
+            <option value="" style="background: #16213e; color: #fff;">全部景点</option>
         </select>
     </div>
 
@@ -37,8 +37,8 @@
         <h3 style="color: #4CAF50; margin-bottom: 20px;" id="ticketModalTitle">新增门票</h3>
         <div style="margin-bottom: 15px;">
             <label style="color: #888; display: block; margin-bottom: 5px;">选择景点</label>
-            <select id="ticketSiteId" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;">
-                <option value="">请选择景点</option>
+            <select id="ticketSiteId" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: #16213e; color: #fff;">
+                <option value="" style="background: #16213e; color: #fff;">请选择景点</option>
             </select>
         </div>
         <div style="margin-bottom: 15px;">
@@ -69,179 +69,200 @@
 </div>
 
 <script>
-let editingTicketId = null;
-let sites = [];
+(function() {
+    let editingTicketId = null;
+    let editingTicketStatus = 1;
+    let sites = [];
 
-function ticketsInit() {
-    loadSitesForSelect();
-    loadTickets();
-}
-
-function loadSitesForSelect() {
-    const adminToken = localStorage.getItem('adminToken');
-    fetch('/site', {
-        headers: { 'token': adminToken }
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.code === 1) {
-            sites = JSON.parse(result.data);
-            // 填充筛选下拉框
-            const filterSelect = document.getElementById('siteFilter');
-            filterSelect.innerHTML = '<option value="">全部景点</option>' +
-                sites.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-            // 填充弹窗下拉框
-            const modalSelect = document.getElementById('ticketSiteId');
-            modalSelect.innerHTML = '<option value="">请选择景点</option>' +
-                sites.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-        }
-    });
-}
-
-function loadTickets() {
-    const adminToken = localStorage.getItem('adminToken');
-    const siteId = document.getElementById('siteFilter').value;
-
-    let url = '/ticket/admin/list';
-    if (siteId) url += '?siteId=' + siteId;
-
-    fetch(url, {
-        headers: { 'token': adminToken }
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.code === 1) {
-            const tickets = JSON.parse(result.data);
-            renderTickets(tickets);
-        }
-    })
-    .catch(() => {
-        document.getElementById('ticketsTable').innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">加载失败</td></tr>';
-    });
-}
-
-function renderTickets(tickets) {
-    const tbody = document.getElementById('ticketsTable');
-    if (!tickets || tickets.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">暂无门票</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = tickets.map(ticket => {
-        const site = sites.find(s => s.id == ticket.site_id);
-        const siteName = site ? site.name : '未知景点';
-        const statusClass = ticket.status === 1 ? 'status-active' : 'status-inactive';
-        const statusText = ticket.status === 1 ? '上架' : '下架';
-        return `
-            <tr>
-                <td>${ticket.id}</td>
-                <td>${siteName}</td>
-                <td>${ticket.name}</td>
-                <td>¥${ticket.price}</td>
-                <td>${ticket.stock === -1 ? '不限量' : ticket.stock}</td>
-                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td>
-                    <div class="action-btns">
-                        <button class="action-btn edit" onclick="editTicket(${ticket.id})">编辑</button>
-                        <button class="action-btn ${ticket.status === 1 ? 'delete' : 'edit'}" onclick="toggleTicketStatus(${ticket.id}, ${ticket.status})">
-                            ${ticket.status === 1 ? '下架' : '上架'}
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
-function openAddTicketModal() {
-    editingTicketId = null;
-    document.getElementById('ticketModalTitle').textContent = '新增门票';
-    document.getElementById('ticketSiteId').value = '';
-    document.getElementById('ticketName').value = '';
-    document.getElementById('ticketPrice').value = '';
-    document.getElementById('ticketOriginalPrice').value = '';
-    document.getElementById('ticketStock').value = '-1';
-    document.getElementById('ticketDesc').value = '';
-    document.getElementById('ticketModal').style.display = 'flex';
-}
-
-function editTicket(id) {
-    editingTicketId = id;
-    document.getElementById('ticketModalTitle').textContent = '编辑门票';
-    // 这里需要获取门票详情并填充表单
-    document.getElementById('ticketModal').style.display = 'flex';
-}
-
-function closeTicketModal() {
-    document.getElementById('ticketModal').style.display = 'none';
-}
-
-function saveTicket() {
-    const siteId = document.getElementById('ticketSiteId').value;
-    const name = document.getElementById('ticketName').value.trim();
-    const price = document.getElementById('ticketPrice').value;
-    const originalPrice = document.getElementById('ticketOriginalPrice').value;
-    const stock = document.getElementById('ticketStock').value;
-    const description = document.getElementById('ticketDesc').value.trim();
-
-    if (!siteId) {
-        alert('请选择景点');
-        return;
-    }
-    if (!name) {
-        alert('请输入门票名称');
-        return;
-    }
-    if (!price || price <= 0) {
-        alert('请输入有效价格');
-        return;
-    }
-
-    const adminToken = localStorage.getItem('adminToken');
-    const data = {
-        siteId, name, price, originalPrice, stock, description
+    window.ticketsInit = function() {
+        loadSitesForSelect();
     };
-    if (editingTicketId) data.id = editingTicketId;
 
-    fetch('/ticket/admin/save', {
-        method: 'POST',
-        headers: {
-            'token': adminToken,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.code === 1) {
-            alert('保存成功');
-            closeTicketModal();
+    window.loadSitesForSelect = function() {
+        const adminToken = localStorage.getItem('adminToken');
+        fetch('/site/list?start=0', {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.length > 0) {
+                sites = data;
+                const filterSelect = document.getElementById('siteFilter');
+                filterSelect.innerHTML = '<option value="" style="background: #16213e; color: #fff;">全部景点</option>' +
+                    sites.map(s => `<option value="${s.id}" style="background: #16213e; color: #fff;">${s.name}</option>`).join('');
+                const modalSelect = document.getElementById('ticketSiteId');
+                modalSelect.innerHTML = '<option value="" style="background: #16213e; color: #fff;">请选择景点</option>' +
+                    sites.map(s => `<option value="${s.id}" style="background: #16213e; color: #fff;">${s.name}</option>`).join('');
+                loadTickets();
+            } else {
+                loadTickets();
+            }
+        })
+        .catch(() => {
             loadTickets();
-        } else {
-            alert(result.data || '保存失败');
-        }
-    })
-    .catch(() => alert('保存失败'));
-}
+        });
+    };
 
-function toggleTicketStatus(id, currentStatus) {
-    const action = currentStatus === 1 ? '下架' : '上架';
-    if (!confirm(`确定要${action}该门票吗？`)) return;
+    window.loadTickets = function() {
+        const adminToken = localStorage.getItem('adminToken');
+        const siteId = document.getElementById('siteFilter').value;
 
-    const adminToken = localStorage.getItem('adminToken');
-    fetch('/ticket/admin/toggle/' + id, {
-        method: 'PUT',
-        headers: { 'token': adminToken }
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.code === 1) {
-            alert(`${action}成功`);
-            loadTickets();
-        } else {
-            alert(result.data || '操作失败');
+        let url = '/ticket/admin/list';
+        if (siteId) url += '?siteId=' + siteId;
+
+        fetch(url, {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                const tickets = JSON.parse(result.data);
+                renderTickets(tickets);
+            } else {
+                document.getElementById('ticketsTable').innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">暂无数据</td></tr>';
+            }
+        })
+        .catch(() => {
+            document.getElementById('ticketsTable').innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">加载失败</td></tr>';
+        });
+    };
+
+    window.renderTickets = function(tickets) {
+        const tbody = document.getElementById('ticketsTable');
+        if (!tickets || tickets.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">暂无门票</td></tr>';
+            return;
         }
-    })
-    .catch(() => alert('操作失败'));
-}
+
+        tbody.innerHTML = tickets.map(ticket => {
+            const site = sites.find(s => String(s.id) === String(ticket.site_id));
+            const siteName = site ? site.name : '未知景点';
+            const statusClass = ticket.status === 1 ? 'status-active' : 'status-inactive';
+            const statusText = ticket.status === 1 ? '上架' : '下架';
+            return `
+                <tr>
+                    <td>${ticket.id}</td>
+                    <td>${siteName}</td>
+                    <td>${ticket.name}</td>
+                    <td>¥${ticket.price}</td>
+                    <td>${ticket.stock === -1 ? '不限量' : ticket.stock}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="action-btn edit" onclick="editTicket(${ticket.id}, ${ticket.site_id}, '${ticket.name}', ${ticket.price}, ${ticket.originalPrice || 0}, ${ticket.stock}, '${(ticket.description || '').replace(/'/g, "\\'")}', ${ticket.status})">编辑</button>
+                            <button class="action-btn ${ticket.status === 1 ? 'delete' : 'edit'}" onclick="toggleTicketStatus(${ticket.id}, ${ticket.status})">
+                                ${ticket.status === 1 ? '下架' : '上架'}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    };
+
+    window.openAddTicketModal = function() {
+        editingTicketId = null;
+        editingTicketStatus = 1;
+        document.getElementById('ticketModalTitle').textContent = '新增门票';
+        document.getElementById('ticketSiteId').value = '';
+        document.getElementById('ticketName').value = '';
+        document.getElementById('ticketPrice').value = '';
+        document.getElementById('ticketOriginalPrice').value = '';
+        document.getElementById('ticketStock').value = '-1';
+        document.getElementById('ticketDesc').value = '';
+        document.getElementById('ticketModal').style.display = 'flex';
+    };
+
+    window.editTicket = function(id, siteId, name, price, originalPrice, stock, description, status) {
+        editingTicketId = id;
+        editingTicketStatus = status;
+        document.getElementById('ticketModalTitle').textContent = '编辑门票';
+        document.getElementById('ticketSiteId').value = siteId;
+        document.getElementById('ticketName').value = name;
+        document.getElementById('ticketPrice').value = price;
+        document.getElementById('ticketOriginalPrice').value = originalPrice;
+        document.getElementById('ticketStock').value = stock;
+        document.getElementById('ticketDesc').value = description;
+        document.getElementById('ticketModal').style.display = 'flex';
+    };
+
+    window.closeTicketModal = function() {
+        document.getElementById('ticketModal').style.display = 'none';
+    };
+
+    window.saveTicket = function() {
+        const siteId = document.getElementById('ticketSiteId').value;
+        const name = document.getElementById('ticketName').value.trim();
+        const price = parseFloat(document.getElementById('ticketPrice').value);
+        const originalPrice = parseFloat(document.getElementById('ticketOriginalPrice').value) || 0;
+        const stock = parseInt(document.getElementById('ticketStock').value);
+        const description = document.getElementById('ticketDesc').value.trim();
+
+        if (!siteId) {
+            alert('请选择景点');
+            return;
+        }
+        if (!name) {
+            alert('请输入门票名称');
+            return;
+        }
+        if (!price || price <= 0) {
+            alert('请输入有效价格');
+            return;
+        }
+
+        const adminToken = localStorage.getItem('adminToken');
+        const data = {
+            site_id: parseInt(siteId),
+            name,
+            price,
+            originalPrice,
+            stock,
+            description,
+            status: editingTicketId ? editingTicketStatus : 1
+        };
+        if (editingTicketId) data.id = editingTicketId;
+
+        fetch('/ticket/admin/save', {
+            method: 'POST',
+            headers: {
+                'token': adminToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                alert('保存成功');
+                closeTicketModal();
+                loadTickets();
+            } else {
+                alert(result.data || '保存失败');
+            }
+        })
+        .catch(() => alert('保存失败'));
+    };
+
+    window.toggleTicketStatus = function(id, currentStatus) {
+        const action = currentStatus === 1 ? '下架' : '上架';
+        if (!confirm(`确定要${action}该门票吗？`)) return;
+
+        const adminToken = localStorage.getItem('adminToken');
+        fetch('/ticket/admin/toggle/' + id, {
+            method: 'PUT',
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                alert(`${action}成功`);
+                loadTickets();
+            } else {
+                alert(result.data || '操作失败');
+            }
+        })
+        .catch(() => alert('操作失败'));
+    };
+})();
 </script>

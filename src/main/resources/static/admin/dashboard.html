@@ -26,9 +26,7 @@
     <div class="card-header">
         <h3 class="card-title">📈 订单趋势（近7天）</h3>
     </div>
-    <div id="orderChart" style="height: 300px; display: flex; align-items: center; justify-content: center; color: #888;">
-        图表加载中...
-    </div>
+    <div id="orderChart" style="width: 100%; height: 300px;"></div>
 </div>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -74,32 +72,165 @@
 </div>
 
 <script>
-function dashboardInit() {
+window.dashboardInit = function() {
     loadDashboardStats();
     loadTopSites();
     loadRecentOrders();
-}
+    setTimeout(function() {
+        loadOrderTrend();
+    }, 100);
+};
 
-// 加载统计数据
 function loadDashboardStats() {
-    // 这里需要后端提供统计接口，暂时使用模拟数据
-    document.getElementById('totalUsers').textContent = '1,234';
-    document.getElementById('todayUsers').textContent = '+12';
-    document.getElementById('totalOrders').textContent = '567';
-    document.getElementById('totalRevenue').textContent = '¥89,234';
-}
-
-// 加载热门景点
-function loadTopSites() {
     const adminToken = localStorage.getItem('adminToken');
-    fetch('/site', {
+    fetch('/admin/stats', {
         headers: { 'token': adminToken }
     })
     .then(response => response.json())
     .then(result => {
         if (result.code === 1) {
-            const sites = JSON.parse(result.data);
-            const sorted = sites.sort((a, b) => b.number - a.number).slice(0, 5);
+            const stats = JSON.parse(result.data);
+            document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+            document.getElementById('totalOrders').textContent = stats.totalOrders || 0;
+            document.getElementById('todayUsers').textContent = '+0';
+            document.getElementById('totalRevenue').textContent = '¥0';
+        }
+    })
+    .catch(() => {
+        document.getElementById('totalUsers').textContent = '0';
+        document.getElementById('totalOrders').textContent = '0';
+    });
+}
+
+function loadOrderTrend() {
+    const adminToken = localStorage.getItem('adminToken');
+    fetch('/admin/stats/order/trend', {
+        headers: { 'token': adminToken }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.code === 1) {
+            const data = JSON.parse(result.data);
+            renderOrderChart(data);
+        } else {
+            document.getElementById('orderChart').innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #888;">暂无数据</div>';
+        }
+    })
+    .catch(() => {
+        document.getElementById('orderChart').innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #888;">加载失败</div>';
+    });
+}
+
+function renderOrderChart(data) {
+    var chartDom = document.getElementById('orderChart');
+    if (!chartDom) {
+        console.error('chartDom not found');
+        return;
+    }
+    
+    if (typeof echarts === 'undefined') {
+        console.error('echarts not loaded');
+        chartDom.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #888;">图表库加载失败</div>';
+        return;
+    }
+    
+    var myChart = echarts.getInstanceByDom(chartDom);
+    if (myChart) {
+        myChart.dispose();
+    }
+    myChart = echarts.init(chartDom);
+    
+    var dates = [];
+    var orderCounts = [];
+    var totalAmounts = [];
+    
+    for (var i = 0; i < data.length; i++) {
+        var d = data[i];
+        var date = new Date(d.date);
+        dates.push((date.getMonth() + 1) + '/' + date.getDate());
+        orderCounts.push(d.orderCount || 0);
+        totalAmounts.push(d.totalAmount || 0);
+    }
+    
+    var option = {
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'cross'
+            }
+        },
+        legend: {
+            data: ['订单数', '销售额'],
+            textStyle: { color: '#888' }
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'category',
+            data: dates,
+            axisLabel: { color: '#888' },
+            axisLine: { lineStyle: { color: '#333' } }
+        },
+        yAxis: [
+            {
+                type: 'value',
+                name: '订单数',
+                axisLabel: { color: '#888' },
+                splitLine: { lineStyle: { color: '#333' } },
+                axisLine: { lineStyle: { color: '#333' } }
+            },
+            {
+                type: 'value',
+                name: '销售额(元)',
+                axisLabel: { color: '#888' },
+                splitLine: { show: false },
+                axisLine: { lineStyle: { color: '#333' } }
+            }
+        ],
+        series: [
+            {
+                name: '订单数',
+                type: 'bar',
+                data: orderCounts,
+                itemStyle: { color: '#4CAF50' }
+            },
+            {
+                name: '销售额',
+                type: 'line',
+                yAxisIndex: 1,
+                data: totalAmounts,
+                smooth: true,
+                itemStyle: { color: '#e74c3c' },
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(231, 76, 60, 0.3)' },
+                        { offset: 1, color: 'rgba(231, 76, 60, 0.05)' }
+                    ])
+                }
+            }
+        ]
+    };
+    
+    myChart.setOption(option);
+    
+    setTimeout(function() {
+        myChart.resize();
+    }, 100);
+}
+
+function loadTopSites() {
+    const adminToken = localStorage.getItem('adminToken');
+    fetch('/site/list?start=0', {
+        headers: { 'token': adminToken }
+    })
+    .then(response => response.json())
+    .then(sites => {
+        if (sites && sites.length > 0) {
+            const sorted = sites.sort((a, b) => (b.number || 0) - (a.number || 0)).slice(0, 5);
             const tbody = document.getElementById('topSites');
             tbody.innerHTML = sorted.map((site, index) => `
                 <tr>
@@ -108,6 +239,8 @@ function loadTopSites() {
                     <td>${site.number || 0}</td>
                 </tr>
             `).join('');
+        } else {
+            document.getElementById('topSites').innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">暂无数据</td></tr>';
         }
     })
     .catch(() => {
@@ -115,10 +248,9 @@ function loadTopSites() {
     });
 }
 
-// 加载最新订单
 function loadRecentOrders() {
     const adminToken = localStorage.getItem('adminToken');
-    fetch('/order/list', {
+    fetch('/admin/orders', {
         headers: { 'token': adminToken }
     })
     .then(response => response.json())
@@ -138,6 +270,8 @@ function loadRecentOrders() {
                     </tr>
                 `;
             }).join('');
+        } else {
+            document.getElementById('recentOrders').innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">暂无数据</td></tr>';
         }
     })
     .catch(() => {

@@ -13,21 +13,63 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f5f5dc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(720deg);
+                opacity: 0;
+            }
         }
 
         .login-container {
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
             padding: 40px;
-            width: 100%;
+            width: 90%;
             max-width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
 
         .login-header {
@@ -36,14 +78,15 @@
         }
 
         .login-header h2 {
-            color: #8B7355;
+            color: white;
             font-size: 28px;
             font-weight: 600;
             margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
         }
 
         .login-header p {
-            color: #A0957E;
+            color: rgba(255, 255, 255, 0.7);
             font-size: 14px;
         }
 
@@ -53,7 +96,7 @@
 
         .form-group label {
             display: block;
-            color: #8B7355;
+            color: rgba(255, 255, 255, 0.8);
             font-size: 14px;
             font-weight: 500;
             margin-bottom: 8px;
@@ -61,63 +104,82 @@
 
         .form-group input {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #D2B48C;
-            border-radius: 8px;
+            padding: 14px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
             font-size: 16px;
-            transition: border-color 0.3s ease;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
         }
 
         .form-group input:focus {
             outline: none;
-            border-color: #8B7355;
-            box-shadow: 0 0 0 2px rgba(139, 115, 85, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
         }
 
         .btn-login {
             width: 100%;
             padding: 14px;
-            background-color: #8B7355;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
             color: white;
-            border: none;
-            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
             margin-top: 10px;
         }
 
         .btn-login:hover {
-            background-color: #6B583F;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.2);
         }
 
         .btn-login:active {
-            transform: translateY(1px);
+            transform: translateY(0);
         }
 
         .error-message {
-            color: #e74c3c;
+            color: #ff6b6b;
             font-size: 14px;
-            margin-top: 10px;
+            margin-top: 15px;
             text-align: center;
+            padding: 10px;
+            background: rgba(255, 107, 107, 0.2);
+            border-radius: 8px;
+            display: none;
         }
 
         .success-message {
-            color: #27ae60;
+            color: #51cf66;
             font-size: 14px;
-            margin-top: 10px;
+            margin-top: 15px;
             text-align: center;
+            padding: 10px;
+            background: rgba(81, 207, 102, 0.2);
+            border-radius: 8px;
+            display: none;
         }
 
         .loading {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255,255,255,.3);
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+            vertical-align: middle;
         }
 
         @keyframes spin {
@@ -126,35 +188,53 @@
 
         .toggle-form {
             text-align: center;
-            margin-top: 20px;
-            color: #8B7355;
+            margin-top: 25px;
+            color: rgba(255, 255, 255, 0.7);
             font-size: 14px;
         }
 
         .toggle-form a {
-            color: #8B7355;
+            color: white;
             text-decoration: none;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s ease;
         }
 
         .toggle-form a:hover {
-            text-decoration: underline;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
 
         .hidden {
             display: none;
         }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .back-link a:hover {
+            color: white;
+        }
     </style>
 </head>
 <body>
+    <div class="particles" id="particles"></div>
+    
     <div class="login-container">
         <div class="login-header">
             <h2 id="formTitle">欢迎登录</h2>
             <p id="formSubtitle">请输入您的用户名和密码</p>
         </div>
         
-        <!-- 登录表单 -->
         <form id="loginForm">
             <div class="form-group">
                 <label for="loginUsername">用户名</label>
@@ -166,12 +246,10 @@
             </div>
             <button type="submit" class="btn-login">
                 <span id="loginText">登录</span>
-                <span id="loginLoading" class="loading" style="display: none;"></span>
             </button>
             <div id="loginError" class="error-message"></div>
         </form>
 
-        <!-- 注册表单 -->
         <form id="registerForm" class="hidden">
             <div class="form-group">
                 <label for="registerUsername">用户名</label>
@@ -187,7 +265,6 @@
             </div>
             <button type="submit" class="btn-login">
                 <span id="registerText">注册</span>
-                <span id="registerLoading" class="loading" style="display: none;"></span>
             </button>
             <div id="registerError" class="error-message"></div>
             <div id="registerSuccess" class="success-message"></div>
@@ -197,9 +274,29 @@
             <span id="toggleText">还没有账号？</span>
             <a id="toggleLink" onclick="toggleForm()">立即注册</a>
         </div>
+        
+        <div class="back-link">
+            <a href="/admin/login.html">管理员登录 →</a>
+        </div>
     </div>
 
     <script>
+        // 创建粒子背景
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                particle.style.width = (Math.random() * 10 + 5) + 'px';
+                particle.style.height = particle.style.width;
+                container.appendChild(particle);
+            }
+        }
+        createParticles();
+
         let isLoginForm = true;
 
         function toggleForm() {
@@ -226,21 +323,22 @@
                 toggleText.textContent = '已有账号？';
                 toggleLink.textContent = '立即登录';
             }
+            
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('registerError').style.display = 'none';
+            document.getElementById('registerSuccess').style.display = 'none';
         }
 
-        // 登录表单提交
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
             const loginText = document.getElementById('loginText');
-            const loginLoading = document.getElementById('loginLoading');
             const loginError = document.getElementById('loginError');
             
-            loginText.style.display = 'none';
-            loginLoading.style.display = 'inline-block';
-            loginError.textContent = '';
+            loginText.textContent = '登录中...';
+            loginError.style.display = 'none';
             
             fetch('/user/login', {
                 method: 'POST',
@@ -251,25 +349,24 @@
             })
             .then(response => response.json())
             .then(data => {
-                loginText.style.display = 'inline';
-                loginLoading.style.display = 'none';
+                loginText.textContent = '登录';
                 
                 if (data.code === 1) {
                     localStorage.setItem('token', data.data);
                     window.location.href = '/sites.html';
                 } else {
                     loginError.textContent = '用户名或密码错误';
+                    loginError.style.display = 'block';
                 }
             })
             .catch(error => {
-                loginText.style.display = 'inline';
-                loginLoading.style.display = 'none';
+                loginText.textContent = '登录';
                 loginError.textContent = '网络错误，请稍后重试';
+                loginError.style.display = 'block';
                 console.error('登录请求失败:', error);
             });
         });
 
-        // 注册表单提交
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -277,20 +374,19 @@
             const password = document.getElementById('registerPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             const registerText = document.getElementById('registerText');
-            const registerLoading = document.getElementById('registerLoading');
             const registerError = document.getElementById('registerError');
             const registerSuccess = document.getElementById('registerSuccess');
             
-            registerError.textContent = '';
-            registerSuccess.textContent = '';
+            registerError.style.display = 'none';
+            registerSuccess.style.display = 'none';
             
             if (password !== confirmPassword) {
                 registerError.textContent = '两次输入的密码不一致';
+                registerError.style.display = 'block';
                 return;
             }
             
-            registerText.style.display = 'none';
-            registerLoading.style.display = 'inline-block';
+            registerText.textContent = '注册中...';
             
             fetch('/user/register', {
                 method: 'POST',
@@ -301,11 +397,11 @@
             })
             .then(response => response.json())
             .then(data => {
-                registerText.style.display = 'inline';
-                registerLoading.style.display = 'none';
+                registerText.textContent = '注册';
                 
                 if (data.code === 1) {
                     registerSuccess.textContent = '注册成功！正在跳转到登录...';
+                    registerSuccess.style.display = 'block';
                     setTimeout(() => {
                         toggleForm();
                         document.getElementById('loginUsername').value = username;
@@ -313,12 +409,13 @@
                     }, 1500);
                 } else {
                     registerError.textContent = data.data || '注册失败，请稍后重试';
+                    registerError.style.display = 'block';
                 }
             })
             .catch(error => {
-                registerText.style.display = 'inline';
-                registerLoading.style.display = 'none';
+                registerText.textContent = '注册';
                 registerError.textContent = '网络错误，请稍后重试';
+                registerError.style.display = 'block';
                 console.error('注册请求失败:', error);
             });
         });

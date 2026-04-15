@@ -6,11 +6,12 @@ import com.example.kastools.entity.AdminLog;
 import com.example.kastools.entity.Result;
 import com.example.kastools.entity.User;
 import com.example.kastools.mapper.AdminMapper;
+import com.example.kastools.mapper.OrderMapper;
+import com.example.kastools.mapper.UsrMap;
 import com.example.kastools.service.AdminService;
 import com.example.kastools.utils.Jwt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -30,7 +31,11 @@ public class AdminServiceImpl implements AdminService {
     @Autowired
     private Jwt jwt;
 
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    @Autowired
+    private UsrMap usrMap;
+
+    @Autowired
+    private OrderMapper orderMapper;
 
     @Override
     public Result login(String username, String password) {
@@ -47,7 +52,7 @@ public class AdminServiceImpl implements AdminService {
             result.setData("账号已被禁用");
             return result;
         }
-        if (!passwordEncoder.matches(password, admin.getPassword())) {
+        if (!password.equals(admin.getPassword())) {
             Result result = new Result();
             result.setCode(0);
             result.setData("账号或密码错误");
@@ -66,14 +71,9 @@ public class AdminServiceImpl implements AdminService {
         // 存入Redis
         redisTemplate.opsForValue().set("admin:token:" + admin.getId(), token, 24, TimeUnit.HOURS);
 
-        // 返回数据
-        Map<String, Object> data = new HashMap<>();
-        data.put("token", token);
-        data.put("admin", admin);
-
         Result result = new Result();
         result.setCode(1);
-        result.setData(JSON.toJSONString(data));
+        result.setData(token);
         return result;
     }
 
@@ -134,7 +134,6 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public Result createAdmin(Admin admin) {
-        // 检查用户名是否已存在
         Admin exist = adminMapper.findByUsername(admin.getUsername());
         if (exist != null) {
             Result result = new Result();
@@ -142,8 +141,18 @@ public class AdminServiceImpl implements AdminService {
             result.setData("账号已存在");
             return result;
         }
-        // 加密密码
-        admin.setPassword(passwordEncoder.encode(admin.getPassword()));
+        // 设置默认状态为启用
+        if (admin.getStatus() == null) {
+            admin.setStatus(1);
+        }
+        // 如果不是运营人员，清空site_id
+        if (!"operator".equals(admin.getRole())) {
+            admin.setSite_id(null);
+        }
+        // 空字符串转为null
+        if (admin.getName() != null && admin.getName().trim().isEmpty()) {
+            admin.setName(null);
+        }
         adminMapper.insert(admin);
         Result result = new Result();
         result.setCode(1);
@@ -163,6 +172,14 @@ public class AdminServiceImpl implements AdminService {
         // 不允许修改账号和密码
         admin.setUsername(null);
         admin.setPassword(null);
+        // 如果不是运营人员，清空site_id
+        if (!"operator".equals(admin.getRole())) {
+            admin.setSite_id(null);
+        }
+        // 空字符串转为null
+        if (admin.getName() != null && admin.getName().trim().isEmpty()) {
+            admin.setName(null);
+        }
         adminMapper.update(admin);
         Result result = new Result();
         result.setCode(1);
@@ -202,8 +219,7 @@ public class AdminServiceImpl implements AdminService {
             result.setData("管理员不存在");
             return result;
         }
-        String encodedPassword = passwordEncoder.encode(newPassword);
-        adminMapper.updatePassword(id, encodedPassword);
+        adminMapper.updatePassword(id, newPassword);
         Result result = new Result();
         result.setCode(1);
         result.setData("密码重置成功");
@@ -230,5 +246,17 @@ public class AdminServiceImpl implements AdminService {
         log.setDetail(detail);
         log.setIp(ip);
         adminMapper.insertLog(log);
+    }
+
+    @Override
+    public Result getStats() {
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalUsers", usrMap.findAllUsers().size());
+        stats.put("totalOrders", orderMapper.findAllOrders().size());
+        
+        Result result = new Result();
+        result.setCode(1);
+        result.setData(JSON.toJSONString(stats));
+        return result;
     }
 }

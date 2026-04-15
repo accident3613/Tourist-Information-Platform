@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
+    <title>农特产 - Kastools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* 头部导航 */
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.8;
+        }
+
+        /* 主内容区 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* 页面标题 */
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .page-header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            font-size: 18px;
+            opacity: 0.8;
+        }
+
+        /* 返回按钮 */
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .back-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 400px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 农产品网格 */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 20px;
+        }
+
+        .product-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .product-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-price {
+            font-size: 24px;
+            color: #f5576c;
+            font-weight: bold;
+        }
+
+        .product-price span {
+            font-size: 14px;
+            color: #999;
+            font-weight: normal;
+        }
+
+        .product-rating {
+            color: #f5a623;
+            font-size: 16px;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        .empty-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        /* 产品详情模态框 */
+        .product-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .product-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .modal-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .modal-rating {
+            color: #f5a623;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .modal-price {
+            font-size: 32px;
+            color: #f5576c;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .modal-price span {
+            font-size: 16px;
+            color: #999;
+            font-weight: normal;
+        }
+
+        .modal-desc {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+
+        /* 数量选择器 */
+        .quantity-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .quantity-label {
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .quantity-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .quantity-btn {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+        .quantity-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .quantity-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .total-price {
+            font-size: 24px;
+            color: #f5576c;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .buy-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .buy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 评论区 */
+        .comments-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .comments-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .comment-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .comment-form textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .comment-form textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .comment-form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 5px;
+        }
+
+        .star-rating .star {
+            font-size: 24px;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .star-rating .star.active {
+            color: #f5a623;
+        }
+
+        .submit-comment-btn {
+            padding: 10px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .comment-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .comment-user {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .comment-rating {
+            color: #f5a623;
+        }
+
+        .comment-time {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .comment-content {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .no-comments {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+        }
+
+        /* 支付模态框 */
+        .payment-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .payment-modal.active {
+            display: flex;
+        }
+
+        .payment-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .payment-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .payment-amount {
+            font-size: 36px;
+            color: #f5576c;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .payment-qrcode {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+        }
+
+        .payment-qrcode img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .payment-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .payment-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .payment-btn.cancel {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .payment-btn.confirm {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部导航 -->
+    <header class="header">
+        <div class="logo" onclick="window.location.href='/sites.html'">🌾 农特产</div>
+        <nav class="nav-links">
+            <a href="/sites.html">景点</a>
+            <a href="/user-profile.html">个人中心</a>
+            <a href="#" onclick="logout()">退出</a>
+        </nav>
+    </header>
+
+    <!-- 主内容区 -->
+    <div class="container">
+        <button class="back-btn" onclick="history.back()">← 返回</button>
+
+        <div class="page-header">
+            <h1 id="siteName">农特产</h1>
+            <p>来自原产地的优质农产品</p>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+        </div>
+
+        <div id="productsGrid" class="products-grid" style="display: none;">
+            <!-- 产品列表将在这里动态加载 -->
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-icon">🌾</div>
+            <p>暂无农特产</p>
+        </div>
+    </div>
+
+    <!-- 产品详情模态框 -->
+    <div id="productModal" class="product-modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeProductModal()">×</button>
+            <img id="modalImage" class="modal-image" src="" alt="产品图片">
+            <div class="modal-body">
+                <h2 id="modalTitle" class="modal-title">产品名称</h2>
+                <div id="modalRating" class="modal-rating">★★★★★</div>
+                <div id="modalPrice" class="modal-price">¥0<span>/斤</span></div>
+                <p id="modalDesc" class="modal-desc">产品描述</p>
+
+                <div class="quantity-section">
+                    <label class="quantity-label">选择购买数量：</label>
+                    <div class="quantity-options">
+                        <button class="quantity-btn" data-qty="1" onclick="selectQuantity(1)">1斤</button>
+                        <button class="quantity-btn" data-qty="2" onclick="selectQuantity(2)">2斤</button>
+                        <button class="quantity-btn" data-qty="3" onclick="selectQuantity(3)">3斤</button>
+                        <button class="quantity-btn" data-qty="5" onclick="selectQuantity(5)">5斤</button>
+                        <button class="quantity-btn" data-qty="10" onclick="selectQuantity(10)">10斤</button>
+                    </div>
+                    <div class="total-price">总价：<span id="totalPrice">¥0</span></div>
+                </div>
+
+                <button class="buy-btn" onclick="buyProduct()">立即购买</button>
+
+                <!-- 评论区 -->
+                <div class="comments-section">
+                    <h3 class="comments-title">用户评价 (<span id="commentCount">0</span>)</h3>
+
+                    <div class="comment-form">
+                        <textarea id="commentContent" placeholder="分享您的购买体验..."></textarea>
+                        <div class="comment-form-footer">
+                            <div class="star-rating" id="starRating">
+                                <span class="star active" data-rating="1">★</span>
+                                <span class="star active" data-rating="2">★</span>
+                                <span class="star active" data-rating="3">★</span>
+                                <span class="star active" data-rating="4">★</span>
+                                <span class="star active" data-rating="5">★</span>
+                            </div>
+                            <button class="submit-comment-btn" onclick="submitComment()">发表评论</button>
+                        </div>
+                    </div>
+
+                    <div id="commentList" class="comment-list">
+                        <!-- 评论将在这里动态加载 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 支付模态框 -->
+    <div id="paymentModal" class="payment-modal">
+        <div class="payment-content">
+            <h3 class="payment-title">请扫码支付</h3>
+            <div class="payment-amount" id="paymentAmount">¥0</div>
+            <div class="payment-qrcode">
+                <img src="/skm.png" alt="收款码">
+            </div>
+            <p style="color: #666; margin: 10px 0;">请使用微信或支付宝扫码支付</p>
+            <div class="payment-buttons">
+                <button class="payment-btn cancel" onclick="closePaymentModal()">取消</button>
+                <button class="payment-btn confirm" onclick="confirmPayment()">我已付款</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSiteId = null;
+        let currentProduct = null;
+        let selectedQuantity = 1;
+        let currentRating = 5;
+        let currentOrderNo = null;
+        const token = localStorage.getItem('token');
+
+        // 页面加载
+        window.onload = function() {
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const siteId = urlParams.get('site_id');
+            const siteName = urlParams.get('site_name');
+
+            if (siteId) {
+                currentSiteId = siteId;
+                if (siteName) {
+                    document.getElementById('siteName').textContent = decodeURIComponent(siteName) + ' - 农特产';
+                }
+                loadProducts(siteId);
+            } else {
+                loadAllProducts();
+            }
+
+            initStarRating();
+        };
+
+        // 加载农产品列表
+        function loadProducts(siteId) {
+            fetch(`/agri/list?siteId=${siteId}`, {
+                headers: { 'token': token }
+            })
+            .then(response => response.json())
+            .then(result => {
+                document.getElementById('loading').style.display = 'none';
+
+                if (result.code === 1) {
+                    let products = result.data;
+                    if (typeof products === 'string') {
+                        products = JSON.parse(products);
+                    }
+                    renderProducts(products);
+                } else {
+                    showEmpty();
+                }
+            })
+            .catch(() => {
+                document.getElementById('loading').style.display = 'none';
+                showEmpty();
+            });
+        }
+
+        // 加载所有农产品
+        function loadAllProducts() {
+            fetch('/agri/all?start=0', {
+                headers: { 'token': token }
+            })
+            .then(response => response.json())
+            .then(result => {
+                document.getElementById('loading').style.display = 'none';
+
+                if (result.code === 1) {
+                    let products = result.data;
+                    if (typeof products === 'string') {
+                        products = JSON.parse(products);
+                    }
+                    renderProducts(products);
+                } else {
+                    showEmpty();
+                }
+            })
+            .catch(() => {
+                document.getElementById('loading').style.display = 'none';
+                showEmpty();
+            });
+        }
+
+        // 渲染产品列表
+        function renderProducts(products) {
+            const grid = document.getElementById('productsGrid');
+
+            if (!products || products.length === 0) {
+                showEmpty();
+                return;
+            }
+
+            grid.innerHTML = products.map(product => {
+                const rating = product.rating || 5;
+                const stars = '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
+                return `
+                    <div class="product-card" onclick="openProductModal(${product.id})">
+                        <img class="product-image" src="/nicon/default.jpg" alt="${product.name}" onerror="this.src='/icon/1.png'">
+                        <div class="product-info">
+                            <div class="product-name">${product.name}</div>
+                            <div class="product-desc">${product.description || '暂无描述'}</div>
+                            <div class="product-meta">
+                                <div class="product-price">¥${product.price_per_jin}<span>/斤</span></div>
+                                <div class="product-rating">${stars}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            grid.style.display = 'grid';
+
+            // 加载图片
+            products.forEach(product => {
+                loadProductImage(product.id);
+            });
+        }
+
+        // 加载产品图片
+        function loadProductImage(productId) {
+            fetch(`/agri/images?productId=${productId}`, {
+                headers: { 'token': token }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    let images = result.data;
+                    if (typeof images === 'string') {
+                        images = JSON.parse(images);
+                    }
+                    if (images && images.length > 0) {
+                        const mainImage = images.find(img => img.is_main === 1) || images[0];
+                        const imgElement = document.querySelector(`[onclick="openProductModal(${productId})"] .product-image`);
+                        if (imgElement && mainImage) {
+                            imgElement.src = mainImage.image_path;
+                        }
+                    }
+                }
+            });
+        }
+
+        // 显示空状态
+        function showEmpty() {
+            document.getElementById('emptyState').style.display = 'block';
+        }
+
+        // 打开产品详情模态框
+        function openProductModal(productId) {
+            fetch(`/agri/detail?id=${productId}`, {
+                headers: { 'token': token }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    let product = result.data;
+                    if (typeof product === 'string') {
+                        product = JSON.parse(product);
+                    }
+                    currentProduct = product;
+                    selectedQuantity = 1;
+
+                    document.getElementById('modalTitle').textContent = product.name;
+                    document.getElementById('modalRating').textContent = '★'.repeat(Math.floor(product.rating || 5));
+                    document.getElementById('modalPrice').innerHTML = `¥${product.price_per_jin}<span>/斤</span>`;
+                    document.getElementById('modalDesc').textContent = product.description || '暂无描述';
+
+                    // 加载图片
+                    loadModalImage(productId);
+
+                    // 重置数量选择
+                    document.querySelectorAll('.quantity-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (parseInt(btn.dataset.qty) === 1) {
+                            btn.classList.add('active');
+                        }
+                    });
+                    updateTotalPrice();
+
+                    // 加载评论
+                    loadComments(productId);
+
+                    document.getElementById('productModal').classList.add('active');
+                }
+            });
+        }
+
+        // 加载模态框图片
+        function loadModalImage(productId) {
+            fetch(`/agri/images?productId=${productId}`, {
+                headers: { 'token': token }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    let images = result.data;
+                    if (typeof images === 'string') {
+                        images = JSON.parse(images);
+                    }
+                    if (images && images.length > 0) {
+                        const mainImage = images.find(img => img.is_main === 1) || images[0];
+                        document.getElementById('modalImage').src = mainImage.image_path;
+                    } else {
+                        document.getElementById('modalImage').src = '/nicon/default.jpg';
+                    }
+                }
+            });
+        }
+
+        // 关闭产品详情模态框
+        function closeProductModal() {
+            document.getElementById('productModal').classList.remove('active');
+            currentProduct = null;
+        }
+
+        // 选择数量
+        function selectQuantity(qty) {
+            selectedQuantity = qty;
+            document.querySelectorAll('.quantity-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (parseInt(btn.dataset.qty) === qty) {
+                    btn.classList.add('active');
+                }
+            });
+            updateTotalPrice();
+        }
+
+        // 更新总价
+        function updateTotalPrice() {
+            if (currentProduct) {
+                const total = (currentProduct.price_per_jin * selectedQuantity).toFixed(2);
+                document.getElementById('totalPrice').textContent = '¥' + total;
+            }
+        }
+
+        // 初始化星级评分
+        function initStarRating() {
+            const stars = document.querySelectorAll('#starRating .star');
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    currentRating = parseInt(this.dataset.rating);
+                    updateStars(currentRating);
+                });
+            });
+        }
+
+        function updateStars(rating) {
+            const stars = document.querySelectorAll('#starRating .star');
+            stars.forEach(star => {
+                if (parseInt(star.dataset.rating) <= rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+
+        // 加载评论
+        function loadComments(productId) {
+            fetch(`/agri/comment/list?productId=${productId}&start=0`, {
+                headers: { 'token': token }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    let comments = result.data;
+                    if (typeof comments === 'string') {
+                        comments = JSON.parse(comments);
+                    }
+                    renderComments(comments);
+                }
+            });
+
+            // 加载评论数量
+            fetch(`/agri/comment/count?productId=${productId}`, {
+                headers: { 'token': token }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    document.getElementById('commentCount').textContent = result.data;
+                }
+            });
+        }
+
+        // 渲染评论
+        function renderComments(comments) {
+            const list = document.getElementById('commentList');
+
+            if (!comments || comments.length === 0) {
+                list.innerHTML = '<div class="no-comments">暂无评论，快来发表第一条评论吧！</div>';
+                return;
+            }
+
+            list.innerHTML = comments.map(comment => {
+                const date = new Date(comment.create_time).toLocaleDateString('zh-CN');
+                const stars = '★'.repeat(comment.rating) + '☆'.repeat(5 - comment.rating);
+                return `
+                    <div class="comment-item">
+                        <div class="comment-header">
+                            <span class="comment-user">${comment.username}</span>
+                            <span class="comment-rating">${stars}</span>
+                        </div>
+                        <div class="comment-time">${date}</div>
+                        <div class="comment-content">${comment.content}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 发表评论
+        function submitComment() {
+            const content = document.getElementById('commentContent').value.trim();
+            if (!content) {
+                alert('请输入评论内容');
+                return;
+            }
+
+            if (!currentProduct) return;
+
+            fetch('/agri/comment/add', {
+                method: 'POST',
+                headers: {
+                    'token': token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    product_id: currentProduct.id,
+                    content: content,
+                    rating: currentRating
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    alert('评论成功！');
+                    document.getElementById('commentContent').value = '';
+                    currentRating = 5;
+                    updateStars(5);
+                    loadComments(currentProduct.id);
+                } else {
+                    alert(result.data || '评论失败');
+                }
+            });
+        }
+
+        // 购买产品
+        function buyProduct() {
+            if (!currentProduct) return;
+
+            fetch('/agri/order/create', {
+                method: 'POST',
+                headers: {
+                    'token': token,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `productId=${currentProduct.id}&quantityJin=${selectedQuantity}`
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    let data = result.data;
+                    if (typeof data === 'string') {
+                        data = JSON.parse(data);
+                    }
+                    currentOrderNo = data.orderNo;
+                    document.getElementById('paymentAmount').textContent = '¥' + data.totalPrice;
+                    document.getElementById('paymentModal').classList.add('active');
+                } else {
+                    alert(result.data || '创建订单失败');
+                }
+            });
+        }
+
+        // 关闭支付模态框
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('active');
+            currentOrderNo = null;
+        }
+
+        // 确认支付
+        function confirmPayment() {
+            if (!currentOrderNo) return;
+
+            fetch('/agri/order/confirm', {
+                method: 'POST',
+                headers: {
+                    'token': token,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `orderNo=${currentOrderNo}`
+            })
+            .then(response => response.json())
+            .then(result => {
+                closePaymentModal();
+                closeProductModal();
+                if (result.code === 1) {
+                    alert('支付成功！');
+                } else {
+                    alert(result.data || '支付失败');
+                }
+            });
+        }
+
+        // 退出登录
+        function logout() {
+            fetch('/user/logout', {
+                method: 'POST',
+                headers: { 'token': token }
+            })
+            .then(() => {
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            })
+            .catch(() => {
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            });
+        }
+    </script>
+</body>
+</html>

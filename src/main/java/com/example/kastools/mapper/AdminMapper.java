@@ -18,12 +18,12 @@ public interface AdminMapper {
     @Select("SELECT * FROM admin ORDER BY create_time DESC")
     List<Admin> findAll();
 
-    @Insert("INSERT INTO admin (username, password, name, role, status) " +
-            "VALUES (#{username}, #{password}, #{name}, #{role}, #{status})")
+    @Insert("INSERT INTO admin (username, password, name, role, site_id, status) " +
+            "VALUES (#{username}, #{password}, #{name}, #{role}, #{site_id}, #{status})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Admin admin);
 
-    @Update("UPDATE admin SET name = #{name}, role = #{role}, status = #{status} " +
+    @Update("UPDATE admin SET name = #{name}, role = #{role}, site_id = #{site_id}, status = #{status} " +
             "WHERE id = #{id}")
     int update(Admin admin);
 

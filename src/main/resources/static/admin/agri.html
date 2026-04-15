@@ -1,0 +1,336 @@
+<!-- 农特产管理页面 -->
+<div class="content-card">
+    <div class="card-header">
+        <h3 class="card-title">农特产列表</h3>
+        <button class="btn btn-primary" onclick="openAddAgriModal()">+ 新增农特产</button>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <select id="siteFilter" onchange="loadAgriProducts()" style="padding: 8px 12px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: #16213e; color: #fff;">
+            <option value="" style="background: #16213e; color: #fff;">全部景点</option>
+        </select>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>景点</th>
+                <th>产品名称</th>
+                <th>价格(元/斤)</th>
+                <th>库存(斤)</th>
+                <th>销量</th>
+                <th>评分</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="agriTable">
+            <tr>
+                <td colspan="9" style="text-align: center; color: #888;">加载中...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- 新增/编辑农特产模态框 -->
+<div id="agriModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: #1a1a2e; border-radius: 12px; padding: 30px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1);">
+        <h3 id="agriModalTitle" style="color: #4CAF50; margin-bottom: 20px;">新增农特产</h3>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; color: #fff; margin-bottom: 5px;">所属景点</label>
+            <select id="agriSiteId" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: #16213e; color: #fff;">
+                <option value="" style="background: #16213e; color: #fff;">请选择景点</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; color: #fff; margin-bottom: 5px;">产品名称</label>
+            <input type="text" id="agriName" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;" placeholder="请输入产品名称">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; color: #fff; margin-bottom: 5px;">产品描述</label>
+            <textarea id="agriDesc" rows="3" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff; resize: vertical;" placeholder="请输入产品描述"></textarea>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; color: #fff; margin-bottom: 5px;">价格(元/斤)</label>
+            <input type="number" id="agriPrice" step="0.01" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;" placeholder="请输入价格">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; color: #fff; margin-bottom: 5px;">库存(斤)</label>
+            <input type="number" id="agriStock" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;" placeholder="请输入库存">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; color: #fff; margin-bottom: 5px;">产品图片</label>
+            <input type="file" id="agriImage" accept="image/*" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;">
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn" onclick="closeAgriModal()" style="flex: 1; background: rgba(255,255,255,0.1); color: #fff;">取消</button>
+            <button class="btn btn-primary" onclick="saveAgriProduct()" style="flex: 1;">保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    let editingAgriId = null;
+    let sites = [];
+
+    window.agriInit = function() {
+        loadSitesForSelect();
+    };
+
+    function loadSitesForSelect() {
+        const adminToken = localStorage.getItem('adminToken');
+        fetch('/site/list?start=0', {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.length > 0) {
+                sites = data;
+                const filterSelect = document.getElementById('siteFilter');
+                filterSelect.innerHTML = '<option value="" style="background: #16213e; color: #fff;">全部景点</option>' +
+                    sites.map(s => `<option value="${s.id}" style="background: #16213e; color: #fff;">${s.name}</option>`).join('');
+                const modalSelect = document.getElementById('agriSiteId');
+                modalSelect.innerHTML = '<option value="" style="background: #16213e; color: #fff;">请选择景点</option>' +
+                    sites.map(s => `<option value="${s.id}" style="background: #16213e; color: #fff;">${s.name}</option>`).join('');
+                loadAgriProducts();
+            } else {
+                loadAgriProducts();
+            }
+        })
+        .catch(() => {
+            loadAgriProducts();
+        });
+    }
+
+    window.loadAgriProducts = function() {
+        const adminToken = localStorage.getItem('adminToken');
+        const siteId = document.getElementById('siteFilter').value;
+
+        let url = '/admin/agri/list';
+        if (siteId) url += '?siteId=' + siteId;
+
+        fetch(url, {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                let products = result.data;
+                if (typeof products === 'string') {
+                    products = JSON.parse(products);
+                }
+                renderAgriProducts(products);
+            } else {
+                document.getElementById('agriTable').innerHTML = '<tr><td colspan="9" style="text-align: center; color: #888;">暂无数据</td></tr>';
+            }
+        })
+        .catch(() => {
+            document.getElementById('agriTable').innerHTML = '<tr><td colspan="9" style="text-align: center; color: #888;">加载失败</td></tr>';
+        });
+    };
+
+    function renderAgriProducts(products) {
+        const tbody = document.getElementById('agriTable');
+        if (!products || products.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #888;">暂无农特产</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = products.map(product => {
+            const site = sites.find(s => String(s.id) === String(product.site_id));
+            const siteName = site ? site.name : '未知景点';
+            const statusClass = product.status === 1 ? 'status-active' : 'status-inactive';
+            const statusText = product.status === 1 ? '上架' : '下架';
+            return `
+                <tr>
+                    <td>${product.id}</td>
+                    <td>${siteName}</td>
+                    <td>${product.name}</td>
+                    <td>¥${product.price_per_jin}</td>
+                    <td>${product.stock}</td>
+                    <td>${product.sales_count || 0}</td>
+                    <td>${product.rating || 5}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="action-btn edit" onclick="editAgriProduct(${product.id}, ${product.site_id}, '${product.name}', '${(product.description || '').replace(/'/g, "\\'")}', ${product.price_per_jin}, ${product.stock})">编辑</button>
+                            <button class="action-btn ${product.status === 1 ? 'delete' : 'edit'}" onclick="toggleAgriStatus(${product.id}, ${product.status})">
+                                ${product.status === 1 ? '下架' : '上架'}
+                            </button>
+                            <button class="action-btn delete" onclick="deleteAgriProduct(${product.id}, '${product.name}')">删除</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    window.openAddAgriModal = function() {
+        editingAgriId = null;
+        document.getElementById('agriModalTitle').textContent = '新增农特产';
+        document.getElementById('agriSiteId').value = '';
+        document.getElementById('agriName').value = '';
+        document.getElementById('agriDesc').value = '';
+        document.getElementById('agriPrice').value = '';
+        document.getElementById('agriStock').value = '';
+        document.getElementById('agriImage').value = '';
+        document.getElementById('agriModal').style.display = 'flex';
+    };
+
+    window.editAgriProduct = function(id, siteId, name, description, price, stock) {
+        editingAgriId = id;
+        document.getElementById('agriModalTitle').textContent = '编辑农特产';
+        document.getElementById('agriSiteId').value = siteId;
+        document.getElementById('agriName').value = name;
+        document.getElementById('agriDesc').value = description || '';
+        document.getElementById('agriPrice').value = price;
+        document.getElementById('agriStock').value = stock;
+        document.getElementById('agriImage').value = '';
+        document.getElementById('agriModal').style.display = 'flex';
+    };
+
+    window.closeAgriModal = function() {
+        document.getElementById('agriModal').style.display = 'none';
+    };
+
+    window.saveAgriProduct = function() {
+        const siteId = document.getElementById('agriSiteId').value;
+        const name = document.getElementById('agriName').value.trim();
+        const description = document.getElementById('agriDesc').value.trim();
+        const price = parseFloat(document.getElementById('agriPrice').value);
+        const stock = parseInt(document.getElementById('agriStock').value);
+        const imageFile = document.getElementById('agriImage').files[0];
+
+        if (!siteId) {
+            alert('请选择景点');
+            return;
+        }
+        if (!name) {
+            alert('请输入产品名称');
+            return;
+        }
+        if (!price || price <= 0) {
+            alert('请输入有效价格');
+            return;
+        }
+        if (isNaN(stock) || stock < 0) {
+            alert('请输入有效库存');
+            return;
+        }
+
+        const adminToken = localStorage.getItem('adminToken');
+
+        // 如果有图片，先上传图片
+        if (imageFile) {
+            const formData = new FormData();
+            formData.append('file', imageFile);
+
+            fetch('/upload', {
+                method: 'POST',
+                headers: { 'token': adminToken },
+                body: formData
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result.includes('successfully')) {
+                    saveAgriInfo(siteId, name, description, price, stock);
+                } else {
+                    alert('图片上传失败');
+                }
+            })
+            .catch(() => alert('图片上传失败'));
+        } else {
+            saveAgriInfo(siteId, name, description, price, stock);
+        }
+    };
+
+    function saveAgriInfo(siteId, name, description, price, stock) {
+        const adminToken = localStorage.getItem('adminToken');
+        const data = {
+            site_id: parseInt(siteId),
+            name,
+            description,
+            price_per_jin: price,
+            stock
+        };
+        if (editingAgriId) {
+            data.id = editingAgriId;
+        } else {
+            data.status = 1;
+        }
+
+        const url = editingAgriId ? '/admin/agri/update' : '/admin/agri/add';
+        const method = editingAgriId ? 'PUT' : 'POST';
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'token': adminToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                alert('保存成功');
+                closeAgriModal();
+                loadAgriProducts();
+            } else {
+                alert(result.data || '保存失败');
+            }
+        })
+        .catch(() => alert('保存失败'));
+    }
+
+    window.toggleAgriStatus = function(id, currentStatus) {
+        const action = currentStatus === 1 ? '下架' : '上架';
+        if (!confirm(`确定要${action}该农特产吗？`)) return;
+
+        const adminToken = localStorage.getItem('adminToken');
+        fetch('/admin/agri/toggle/' + id, {
+            method: 'PUT',
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                alert(`${action}成功`);
+                loadAgriProducts();
+            } else {
+                alert(result.data || '操作失败');
+            }
+        })
+        .catch(() => alert('操作失败'));
+    };
+
+    window.deleteAgriProduct = function(id, name) {
+        if (!confirm(`确定要删除农特产 "${name}" 吗？`)) return;
+
+        const adminToken = localStorage.getItem('adminToken');
+        fetch('/admin/agri/delete/' + id, {
+            method: 'DELETE',
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                alert('删除成功');
+                loadAgriProducts();
+            } else {
+                alert(result.data || '删除失败');
+            }
+        })
+        .catch(() => alert('删除失败'));
+    };
+})();
+</script>

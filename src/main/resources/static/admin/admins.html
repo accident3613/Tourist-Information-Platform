@@ -2,7 +2,10 @@
 <div class="content-card">
     <div class="card-header">
         <h3 class="card-title">管理员列表</h3>
-        <button class="btn btn-primary" onclick="openAddAdminModal()">+ 新增管理员</button>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" onclick="openImportAdminModal()" style="background: rgba(255,255,255,0.1); color: #fff;">批量导入</button>
+            <button class="btn btn-primary" onclick="openAddAdminModal()">+ 新增管理员</button>
+        </div>
     </div>
 
     <table class="data-table">
@@ -12,6 +15,7 @@
                 <th>账号</th>
                 <th>姓名</th>
                 <th>角色</th>
+                <th>所属景点</th>
                 <th>状态</th>
                 <th>最后登录</th>
                 <th>操作</th>
@@ -19,10 +23,33 @@
         </thead>
         <tbody id="adminsTable">
             <tr>
-                <td colspan="7" style="text-align: center; color: #888;">加载中...</td>
+                <td colspan="8" style="text-align: center; color: #888;">加载中...</td>
             </tr>
         </tbody>
     </table>
+</div>
+
+<!-- 批量导入管理员弹窗 -->
+<div id="importAdminModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: #1a1a2e; border-radius: 12px; padding: 30px; width: 90%; max-width: 500px; border: 1px solid rgba(255,255,255,0.1);">
+        <h3 style="color: #4CAF50; margin-bottom: 20px;">批量导入员工</h3>
+        <div style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+            <p style="color: #888; margin-bottom: 10px;">请上传CSV文件，文件格式要求：</p>
+            <ul style="color: #aaa; font-size: 13px; margin-left: 20px;">
+                <li>第一行为表头，从第二行开始为数据</li>
+                <li>必填列：账号、密码</li>
+                <li>可选列：姓名、角色(super/admin/operator)、所属景点ID、状态</li>
+            </ul>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <input type="file" id="adminImportFile" accept=".csv" style="color: #fff;">
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" onclick="closeImportAdminModal()" style="flex: 1; background: rgba(255,255,255,0.1); color: #fff;">取消</button>
+            <button class="btn btn-primary" onclick="importAdmins()" style="flex: 1;">导入</button>
+        </div>
+        <div id="adminImportResult" style="margin-top: 15px; display: none;"></div>
+    </div>
 </div>
 
 <div class="content-card">
@@ -57,7 +84,7 @@
         </div>
         <div style="margin-bottom: 15px;">
             <label style="color: #888; display: block; margin-bottom: 5px;">姓名</label>
-            <input type="text" id="adminName" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;">
+            <input type="text" id="adminNameInput" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;">
         </div>
         <div style="margin-bottom: 15px;">
             <label style="color: #888; display: block; margin-bottom: 5px;">密码</label>
@@ -65,10 +92,16 @@
         </div>
         <div style="margin-bottom: 15px;">
             <label style="color: #888; display: block; margin-bottom: 5px;">角色</label>
-            <select id="adminRole" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;">
-                <option value="operator">运营人员</option>
-                <option value="admin">管理员</option>
-                <option value="super">超级管理员</option>
+            <select id="adminRoleSelect" onchange="onRoleChange()" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: #16213e; color: #fff;">
+                <option value="operator" style="background: #16213e; color: #fff;">运营人员</option>
+                <option value="admin" style="background: #16213e; color: #fff;">管理员</option>
+                <option value="super" style="background: #16213e; color: #fff;">超级管理员</option>
+            </select>
+        </div>
+        <div id="siteSelectContainer" style="margin-bottom: 15px;">
+            <label style="color: #888; display: block; margin-bottom: 5px;">所属景点</label>
+            <select id="adminSiteId" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: #16213e; color: #fff;">
+                <option value="" style="background: #16213e; color: #fff;">请选择景点</option>
             </select>
         </div>
         <div style="display: flex; gap: 10px;">
@@ -79,188 +112,305 @@
 </div>
 
 <script>
-let editingAdminId = null;
+(function() {
+    let editingAdminId = null;
 
-function adminsInit() {
-    loadAdmins();
-    loadLogs();
-}
+    let sitesList = [];
 
-function loadAdmins() {
-    const adminToken = localStorage.getItem('adminToken');
-    fetch('/admin/list', {
-        headers: { 'token': adminToken }
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.code === 1) {
-            const admins = JSON.parse(result.data);
-            renderAdmins(admins);
-        }
-    })
-    .catch(() => {
-        document.getElementById('adminsTable').innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">加载失败</td></tr>';
-    });
-}
-
-function renderAdmins(admins) {
-    const tbody = document.getElementById('adminsTable');
-    if (admins.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">暂无管理员</td></tr>';
-        return;
-    }
-
-    const roleTexts = {
-        'super': '超级管理员',
-        'admin': '管理员',
-        'operator': '运营人员'
+    window.adminsInit = function() {
+        loadAdmins();
+        loadLogs();
+        loadSitesForSelect();
     };
 
-    tbody.innerHTML = admins.map(admin => {
-        const statusClass = admin.status === 1 ? 'status-active' : 'status-inactive';
-        const statusText = admin.status === 1 ? '启用' : '禁用';
-        const lastLogin = admin.lastLoginTime ? new Date(admin.lastLoginTime).toLocaleString('zh-CN') : '-';
-        return `
-            <tr>
-                <td>${admin.id}</td>
-                <td>${admin.username}</td>
-                <td>${admin.name || '-'}</td>
-                <td>${roleTexts[admin.role] || admin.role}</td>
-                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td>${lastLogin}</td>
-                <td>
-                    <div class="action-btns">
-                        <button class="action-btn edit" onclick="editAdmin(${admin.id}, '${admin.username}', '${admin.name || ''}', '${admin.role}')">编辑</button>
-                        <button class="action-btn delete" onclick="deleteAdmin(${admin.id}, '${admin.username}')">删除</button>
+    window.openImportAdminModal = function() {
+        document.getElementById('adminImportFile').value = '';
+        document.getElementById('adminImportResult').style.display = 'none';
+        document.getElementById('importAdminModal').style.display = 'flex';
+    };
+
+    window.closeImportAdminModal = function() {
+        document.getElementById('importAdminModal').style.display = 'none';
+    };
+
+    window.importAdmins = function() {
+        const fileInput = document.getElementById('adminImportFile');
+        const file = fileInput.files[0];
+        if (!file) {
+            alert('请选择文件');
+            return;
+        }
+
+        const adminToken = localStorage.getItem('adminToken');
+        const formData = new FormData();
+        formData.append('file', file);
+
+        fetch('/admin/excel/import/admins', {
+            method: 'POST',
+            headers: { 'token': adminToken },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+            const resultDiv = document.getElementById('adminImportResult');
+            resultDiv.style.display = 'block';
+            if (result.code === 1) {
+                const data = JSON.parse(result.data);
+                resultDiv.innerHTML = `
+                    <div style="padding: 15px; background: rgba(76, 175, 80, 0.2); border-radius: 8px; color: #4CAF50;">
+                        <p>导入完成！成功: ${data.success} 条，失败: ${data.failed} 条</p>
+                        ${data.errors && data.errors.length > 0 ? 
+                            '<details><summary style="cursor: pointer; margin-top: 10px;">查看错误详情</summary><ul style="margin-top: 10px; font-size: 12px;">' + 
+                            data.errors.map(e => '<li>' + e + '</li>').join('') + '</ul></details>' : ''}
                     </div>
-                </td>
+                `;
+                loadAdmins();
+            } else {
+                resultDiv.innerHTML = `<div style="padding: 15px; background: rgba(244, 67, 54, 0.2); border-radius: 8px; color: #f44336;">${result.data}</div>`;
+            }
+        })
+        .catch(() => {
+            const resultDiv = document.getElementById('adminImportResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `<div style="padding: 15px; background: rgba(244, 67, 54, 0.2); border-radius: 8px; color: #f44336;">导入失败</div>`;
+        });
+    };
+
+    window.loadSitesForSelect = function() {
+        const adminToken = localStorage.getItem('adminToken');
+        fetch('/admin/sites/all', {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                sitesList = JSON.parse(result.data);
+                updateSiteSelectOptions();
+            }
+        })
+        .catch(() => {
+            console.log('加载景点列表失败');
+        });
+    };
+
+    window.updateSiteSelectOptions = function() {
+        const select = document.getElementById('adminSiteId');
+        select.innerHTML = '<option value="" style="background: #16213e; color: #fff;">请选择景点</option>';
+        sitesList.forEach(site => {
+            const option = document.createElement('option');
+            option.value = site.id;
+            option.textContent = site.name;
+            option.style.background = '#16213e';
+            option.style.color = '#fff';
+            select.appendChild(option);
+        });
+    };
+
+    window.onRoleChange = function() {
+        const role = document.getElementById('adminRoleSelect').value;
+        const siteContainer = document.getElementById('siteSelectContainer');
+        if (role === 'operator') {
+            siteContainer.style.display = 'block';
+        } else {
+            siteContainer.style.display = 'none';
+            document.getElementById('adminSiteId').value = '';
+        }
+    };
+
+    window.loadAdmins = function() {
+        const adminToken = localStorage.getItem('adminToken');
+        fetch('/admin/list', {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                const admins = JSON.parse(result.data);
+                renderAdmins(admins);
+            } else {
+                document.getElementById('adminsTable').innerHTML = '<tr><td colspan="8" style="text-align: center; color: #888;">暂无数据</td></tr>';
+            }
+        })
+        .catch(() => {
+            document.getElementById('adminsTable').innerHTML = '<tr><td colspan="8" style="text-align: center; color: #888;">加载失败</td></tr>';
+        });
+    };
+
+    window.renderAdmins = function(admins) {
+        const tbody = document.getElementById('adminsTable');
+        if (admins.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #888;">暂无管理员</td></tr>';
+            return;
+        }
+
+        const roleTexts = {
+            'super': '超级管理员',
+            'admin': '管理员',
+            'operator': '运营人员'
+        };
+
+        tbody.innerHTML = admins.map(admin => {
+            const statusClass = admin.status === 1 ? 'status-active' : 'status-inactive';
+            const statusText = admin.status === 1 ? '启用' : '禁用';
+            const lastLogin = admin.lastLoginTime ? new Date(admin.lastLoginTime).toLocaleString('zh-CN') : '-';
+            const siteName = admin.site_id ? (sitesList.find(s => s.id == admin.site_id)?.name || '-') : '-';
+            return `
+                <tr>
+                    <td>${admin.id}</td>
+                    <td>${admin.username}</td>
+                    <td>${admin.name || '-'}</td>
+                    <td>${roleTexts[admin.role] || admin.role}</td>
+                    <td>${siteName}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>${lastLogin}</td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="action-btn edit" onclick="editAdmin(${admin.id}, '${admin.username}', '${admin.name || ''}', '${admin.role}', ${admin.site_id || null})">编辑</button>
+                            <button class="action-btn delete" onclick="deleteAdmin(${admin.id}, '${admin.username}')">删除</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    };
+
+    window.loadLogs = function() {
+        const adminToken = localStorage.getItem('adminToken');
+        fetch('/admin/logs?limit=20', {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                const logs = JSON.parse(result.data);
+                renderLogs(logs);
+            }
+        })
+        .catch(() => {
+            document.getElementById('logsTable').innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">加载失败</td></tr>';
+        });
+    };
+
+    window.renderLogs = function(logs) {
+        const tbody = document.getElementById('logsTable');
+        if (logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">暂无日志</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = logs.map(log => `
+            <tr>
+                <td>${new Date(log.createTime).toLocaleString('zh-CN')}</td>
+                <td>${log.adminUsername || '-'}</td>
+                <td>${log.action}</td>
+                <td>${log.targetType || '-'}</td>
+                <td>${log.detail || '-'}</td>
             </tr>
-        `;
-    }).join('');
-}
+        `).join('');
+    };
 
-function loadLogs() {
-    const adminToken = localStorage.getItem('adminToken');
-    fetch('/admin/logs?limit=20', {
-        headers: { 'token': adminToken }
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.code === 1) {
-            const logs = JSON.parse(result.data);
-            renderLogs(logs);
+    window.openAddAdminModal = function() {
+        editingAdminId = null;
+        document.getElementById('adminModalTitle').textContent = '新增管理员';
+        document.getElementById('adminUsername').value = '';
+        document.getElementById('adminNameInput').value = '';
+        document.getElementById('adminPassword').value = '';
+        document.getElementById('adminPassword').placeholder = '请输入密码';
+        document.getElementById('adminRoleSelect').value = 'operator';
+        document.getElementById('adminSiteId').value = '';
+        onRoleChange();
+        document.getElementById('adminModal').style.display = 'flex';
+    };
+
+    window.editAdmin = function(id, username, name, role, siteId) {
+        editingAdminId = id;
+        document.getElementById('adminModalTitle').textContent = '编辑管理员';
+        document.getElementById('adminUsername').value = username;
+        document.getElementById('adminNameInput').value = name || '';
+        document.getElementById('adminPassword').value = '';
+        document.getElementById('adminPassword').placeholder = '不修改请留空';
+        document.getElementById('adminRoleSelect').value = role;
+        document.getElementById('adminSiteId').value = siteId || '';
+        onRoleChange();
+        document.getElementById('adminModal').style.display = 'flex';
+    };
+
+    window.closeAdminModal = function() {
+        document.getElementById('adminModal').style.display = 'none';
+    };
+
+    window.saveAdmin = function() {
+        const username = document.getElementById('adminUsername').value.trim();
+        const name = document.getElementById('adminNameInput').value.trim();
+        const password = document.getElementById('adminPassword').value;
+        const role = document.getElementById('adminRoleSelect').value;
+        const siteId = document.getElementById('adminSiteId').value;
+
+        if (!username) {
+            alert('请输入账号');
+            return;
         }
-    })
-    .catch(() => {
-        document.getElementById('logsTable').innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">加载失败</td></tr>';
-    });
-}
+        if (!editingAdminId && !password) {
+            alert('请输入密码');
+            return;
+        }
+        if (role === 'operator' && !siteId) {
+            alert('请选择所属景点');
+            return;
+        }
 
-function renderLogs(logs) {
-    const tbody = document.getElementById('logsTable');
-    if (logs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">暂无日志</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = logs.map(log => `
-        <tr>
-            <td>${new Date(log.createTime).toLocaleString('zh-CN')}</td>
-            <td>${log.adminUsername || '-'}</td>
-            <td>${log.action}</td>
-            <td>${log.targetType || '-'}</td>
-            <td>${log.detail || '-'}</td>
-        </tr>
-    `).join('');
-}
-
-function openAddAdminModal() {
-    editingAdminId = null;
-    document.getElementById('adminModalTitle').textContent = '新增管理员';
-    document.getElementById('adminUsername').value = '';
-    document.getElementById('adminName').value = '';
-    document.getElementById('adminPassword').value = '';
-    document.getElementById('adminPassword').placeholder = '请输入密码';
-    document.getElementById('adminRole').value = 'operator';
-    document.getElementById('adminModal').style.display = 'flex';
-}
-
-function editAdmin(id, username, name, role) {
-    editingAdminId = id;
-    document.getElementById('adminModalTitle').textContent = '编辑管理员';
-    document.getElementById('adminUsername').value = username;
-    document.getElementById('adminName').value = name;
-    document.getElementById('adminPassword').value = '';
-    document.getElementById('adminPassword').placeholder = '不修改请留空';
-    document.getElementById('adminRole').value = role;
-    document.getElementById('adminModal').style.display = 'flex';
-}
-
-function closeAdminModal() {
-    document.getElementById('adminModal').style.display = 'none';
-}
-
-function saveAdmin() {
-    const username = document.getElementById('adminUsername').value.trim();
-    const name = document.getElementById('adminName').value.trim();
-    const password = document.getElementById('adminPassword').value;
-    const role = document.getElementById('adminRole').value;
-
-    if (!username) {
-        alert('请输入账号');
-        return;
-    }
-    if (!editingAdminId && !password) {
-        alert('请输入密码');
-        return;
-    }
-
-    const adminToken = localStorage.getItem('adminToken');
-    const data = { username, name, role };
-    if (password) data.password = password;
-    if (editingAdminId) data.id = editingAdminId;
-
-    const url = editingAdminId ? '/admin/update' : '/admin/create';
-    const method = editingAdminId ? 'PUT' : 'POST';
-
-    fetch(url, {
-        method: method,
-        headers: {
-            'token': adminToken,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.code === 1) {
-            alert('保存成功');
-            closeAdminModal();
-            loadAdmins();
+        const adminToken = localStorage.getItem('adminToken');
+        const data = { username, name, role };
+        if (password) data.password = password;
+        if (editingAdminId) data.id = editingAdminId;
+        if (role === 'operator' && siteId) {
+            data.site_id = parseInt(siteId);
         } else {
-            alert(result.data || '保存失败');
+            data.site_id = null;
         }
-    })
-    .catch(() => alert('保存失败'));
-}
 
-function deleteAdmin(id, username) {
-    if (!confirm(`确定要删除管理员 "${username}" 吗？`)) return;
+        const url = editingAdminId ? '/admin/update' : '/admin/create';
+        const method = editingAdminId ? 'PUT' : 'POST';
 
-    const adminToken = localStorage.getItem('adminToken');
-    fetch('/admin/delete/' + id, {
-        method: 'DELETE',
-        headers: { 'token': adminToken }
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.code === 1) {
-            alert('删除成功');
-            loadAdmins();
-        } else {
-            alert(result.data || '删除失败');
-        }
-    })
-    .catch(() => alert('删除失败'));
-}
+        fetch(url, {
+            method: method,
+            headers: {
+                'token': adminToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                alert('保存成功');
+                closeAdminModal();
+                loadAdmins();
+            } else {
+                alert(result.data || '保存失败');
+            }
+        })
+        .catch(() => alert('保存失败'));
+    };
+
+    window.deleteAdmin = function(id, username) {
+        if (!confirm(`确定要删除管理员 "${username}" 吗？`)) return;
+
+        const adminToken = localStorage.getItem('adminToken');
+        fetch('/admin/delete/' + id, {
+            method: 'DELETE',
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                alert('删除成功');
+                loadAdmins();
+            } else {
+                alert(result.data || '删除失败');
+            }
+        })
+        .catch(() => alert('删除失败'));
+    };
+})();
 </script>

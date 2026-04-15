@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>探索世界 - 景点展示</title>
+    <title>潭山村旅游平台</title>
     <style>
         * {
             margin: 0;
@@ -14,7 +14,8 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: url('/R-C.jpg') no-repeat center center fixed;
+            background-size: cover;
             min-height: 100vh;
             overflow-x: hidden;
         }
@@ -483,6 +484,57 @@
         .search-btn.clear-btn:hover {
             background: rgba(255, 255, 255, 0.3);
         }
+
+        /* 筛选区域 */
+        .filter-section {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            padding: 10px 20px 20px;
+        }
+
+        .filter-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .filter-label {
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .rating-filter {
+            display: flex;
+            gap: 8px;
+        }
+
+        .rating-btn {
+            padding: 8px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .rating-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .rating-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -491,7 +543,7 @@
 
     <!-- 头部导航 -->
     <header class="header">
-        <div class="logo">🌍 探索世界</div>
+        <div class="logo">潭山村欢迎您</div>
         <nav class="nav-links">
             <a href="/sites.html">首页</a>
             <a href="/user-profile.html">个人中心</a>
@@ -502,7 +554,7 @@
     <!-- 主标题区 -->
     <section class="hero-section">
         <h1 class="hero-title">发现精彩景点</h1>
-        <p class="hero-subtitle">探索世界各地的美丽风景，开启您的旅程</p>
+        <p class="hero-subtitle">探索潭山村美丽风景，开启您的旅程</p>
     </section>
 
     <!-- 搜索区域 -->
@@ -516,6 +568,20 @@
                 搜索
             </button>
             <button class="search-btn clear-btn" onclick="clearSearch()">清除</button>
+        </div>
+    </div>
+
+    <!-- 筛选区域 -->
+    <div class="filter-section">
+        <div class="filter-container">
+            <span class="filter-label">按星级筛选：</span>
+            <div class="rating-filter">
+                <button class="rating-btn active" onclick="filterByRating(0, 5, this)">全部</button>
+                <button class="rating-btn" onclick="filterByRating(4, 5, this)">★ 4星以上</button>
+                <button class="rating-btn" onclick="filterByRating(3, 4, this)">★ 3-4星</button>
+                <button class="rating-btn" onclick="filterByRating(2, 3, this)">★ 2-3星</button>
+                <button class="rating-btn" onclick="filterByRating(0, 2, this)">★ 2星以下</button>
+            </div>
         </div>
     </div>
 
@@ -548,9 +614,12 @@
         let currentPage = 0;
         const pageSize = 5;
         let isLoading = false;
-        let userCollections = []; // 存储用户收藏的景点ID
-        let searchKeyword = ''; // 搜索关键词
-        let isSearchMode = false; // 是否处于搜索模式
+        let userCollections = [];
+        let searchKeyword = '';
+        let isSearchMode = false;
+        let minRating = 0;
+        let maxRating = 5;
+        let isFilterMode = false;
 
         // 初始化页面
         window.onload = function() {
@@ -632,7 +701,13 @@
             pagination.style.display = 'none';
 
             let url;
-            if (isSearchMode && searchKeyword) {
+            if (isFilterMode) {
+                if (searchKeyword) {
+                    url = `/site/filter?minRating=${minRating}&maxRating=${maxRating}&start=${currentPage * pageSize}&keyword=${encodeURIComponent(searchKeyword)}`;
+                } else {
+                    url = `/site/filter?minRating=${minRating}&maxRating=${maxRating}&start=${currentPage * pageSize}`;
+                }
+            } else if (isSearchMode && searchKeyword) {
                 url = `/site/search?keyword=${encodeURIComponent(searchKeyword)}&start=${currentPage * pageSize}`;
             } else {
                 url = `/site/list?start=${currentPage * pageSize}`;
@@ -949,6 +1024,21 @@
             document.getElementById('searchInput').value = '';
             searchKeyword = '';
             isSearchMode = false;
+            currentPage = 0;
+            loadSites();
+        }
+
+        // 按星级筛选
+        function filterByRating(min, max, btnElement) {
+            // 更新按钮状态
+            document.querySelectorAll('.rating-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            btnElement.classList.add('active');
+
+            minRating = min;
+            maxRating = max;
+            isFilterMode = (min !== 0 || max !== 5);
             currentPage = 0;
             loadSites();
         }

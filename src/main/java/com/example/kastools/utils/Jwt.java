@@ -6,7 +6,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -39,7 +38,7 @@ claims.put("icon",user.getIcon());
     }
     public String getusn(String token){
         Claims claims = Jwts.parser()
-                .setSigningKey(Keys.hmacShaKeyFor(Jwtpro.secret_key.getBytes()))
+                .setSigningKey(Jwtpro.secret_key.getBytes(StandardCharsets.UTF_8))
                 .build()
                 .parseClaimsJws(token)
                 .getBody();

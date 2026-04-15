@@ -16,4 +16,14 @@ public interface SiteService {
     List<Site_list> searchSites(String keyword, int start);
 
     int countSearchSites(String keyword);
+
+    Site_list saveSite(Site_list site);
+
+    boolean deleteSite(int id);
+
+    List<Site_list> getSitesByRating(double minRating, double maxRating, int start);
+
+    List<Site_list> searchSitesByRating(String keyword, double minRating, double maxRating, int start);
+
+    List<Site_list> getAllSites();
 }

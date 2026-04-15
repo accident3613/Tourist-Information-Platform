@@ -1,0 +1,247 @@
+<!-- 数据分析页面 -->
+<div class="content-card">
+    <div class="card-header">
+        <h3 class="card-title">景点数据分析</h3>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- 景点评分分布 -->
+        <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px;">
+            <h4 style="color: #4CAF50; margin-bottom: 15px;">景点评分分布</h4>
+            <div id="ratingChart" style="height: 300px;"></div>
+        </div>
+        
+        <!-- 景点热度排行 -->
+        <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px;">
+            <h4 style="color: #4CAF50; margin-bottom: 15px;">景点热度排行 (浏览量)</h4>
+            <div id="hotChart" style="height: 300px;"></div>
+        </div>
+        
+        <!-- 各景点收入占比 -->
+        <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px;">
+            <h4 style="color: #4CAF50; margin-bottom: 15px;">各景点收入占比</h4>
+            <div id="incomeChart" style="height: 300px;"></div>
+        </div>
+        
+        <!-- 景点门票销量 -->
+        <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px;">
+            <h4 style="color: #4CAF50; margin-bottom: 15px;">景点门票销量</h4>
+            <div id="orderChart" style="height: 300px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    window.statsInit = function() {
+        loadAllStats();
+    };
+
+    window.loadAllStats = function() {
+        const adminToken = localStorage.getItem('adminToken');
+        fetch('/admin/stats/site/all', {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            console.log('统计数据返回:', result);
+            if (result.code === 1) {
+                const data = JSON.parse(result.data);
+                console.log('解析后的数据:', data);
+                renderRatingChart(data.ratingDistribution || []);
+                renderHotChart(data.topSitesByView || []);
+                renderIncomeChart(data.siteIncome || []);
+                renderOrderChart(data.siteOrderCount || []);
+            }
+        })
+        .catch(error => {
+            console.error('加载统计数据失败:', error);
+        });
+    };
+
+    window.renderRatingChart = function(data) {
+        const chartDom = document.getElementById('ratingChart');
+        if (!chartDom) {
+            console.error('找不到ratingChart元素');
+            return;
+        }
+        const chart = echarts.init(chartDom);
+        const xData = [];
+        const yData = [];
+        
+        for (let i = 0; i <= 5; i++) {
+            xData.push(i + '-' + (i + 1) + '分');
+            const item = data.find(d => d.rating_range == i);
+            yData.push(item ? item.count : 0);
+        }
+        
+        chart.setOption({
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: {
+                type: 'category',
+                data: xData,
+                axisLabel: { color: '#888' },
+                axisLine: { lineStyle: { color: '#333' } }
+            },
+            yAxis: {
+                type: 'value',
+                axisLabel: { color: '#888' },
+                splitLine: { lineStyle: { color: '#333' } }
+            },
+            series: [{
+                data: yData,
+                type: 'bar',
+                itemStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: '#4CAF50' },
+                        { offset: 1, color: '#2E7D32' }
+                    ])
+                }
+            }]
+        });
+    };
+
+    window.renderHotChart = function(data) {
+        const chartDom = document.getElementById('hotChart');
+        if (!chartDom) {
+            console.error('找不到hotChart元素');
+            return;
+        }
+        const chart = echarts.init(chartDom);
+        const names = data.map(d => d.name).reverse();
+        const values = data.map(d => d.view_count || 0).reverse();
+        
+        chart.setOption({
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: {
+                type: 'value',
+                axisLabel: { color: '#888' },
+                splitLine: { lineStyle: { color: '#333' } }
+            },
+            yAxis: {
+                type: 'category',
+                data: names,
+                axisLabel: { color: '#888' },
+                axisLine: { lineStyle: { color: '#333' } }
+            },
+            series: [{
+                data: values,
+                type: 'bar',
+                itemStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                        { offset: 0, color: '#FF9800' },
+                        { offset: 1, color: '#F57C00' }
+                    ])
+                }
+            }]
+        });
+    };
+
+    window.renderIncomeChart = function(data) {
+        const chartDom = document.getElementById('incomeChart');
+        if (!chartDom) {
+            console.error('找不到incomeChart元素');
+            return;
+        }
+        const chart = echarts.init(chartDom);
+        const filteredData = data.filter(d => d.total_income > 0);
+        
+        if (filteredData.length === 0) {
+            chart.setOption({
+                title: {
+                    text: '暂无收入数据',
+                    left: 'center',
+                    top: 'center',
+                    textStyle: { color: '#888' }
+                }
+            });
+            return;
+        }
+        
+        chart.setOption({
+            tooltip: {
+                trigger: 'item',
+                formatter: '{b}: ¥{c} ({d}%)'
+            },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                avoidLabelOverlap: false,
+                itemStyle: {
+                    borderRadius: 10,
+                    borderColor: '#1a1a2e',
+                    borderWidth: 2
+                },
+                label: {
+                    show: true,
+                    color: '#fff',
+                    formatter: '{b}\n{d}%'
+                },
+                labelLine: {
+                    lineStyle: { color: '#888' }
+                },
+                data: filteredData.map((d, i) => ({
+                    name: d.name,
+                    value: d.total_income,
+                    itemStyle: {
+                        color: ['#4CAF50', '#2196F3', '#FF9800', '#E91E63', '#9C27B0', '#00BCD4', '#FF5722', '#795548'][i % 8]
+                    }
+                }))
+            }]
+        });
+    };
+
+    window.renderOrderChart = function(data) {
+        const chartDom = document.getElementById('orderChart');
+        if (!chartDom) {
+            console.error('找不到orderChart元素');
+            return;
+        }
+        const chart = echarts.init(chartDom);
+        const names = data.map(d => d.name);
+        const values = data.map(d => d.order_count || 0);
+        
+        chart.setOption({
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: {
+                type: 'category',
+                data: names,
+                axisLabel: { 
+                    color: '#888',
+                    rotate: names.length > 5 ? 30 : 0
+                },
+                axisLine: { lineStyle: { color: '#333' } }
+            },
+            yAxis: {
+                type: 'value',
+                axisLabel: { color: '#888' },
+                splitLine: { lineStyle: { color: '#333' } }
+            },
+            series: [{
+                data: values,
+                type: 'bar',
+                itemStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: '#2196F3' },
+                        { offset: 1, color: '#1565C0' }
+                    ])
+                }
+            }]
+        });
+    };
+
+    window.addEventListener('resize', function() {
+        const charts = ['ratingChart', 'hotChart', 'incomeChart', 'orderChart'];
+        charts.forEach(id => {
+            const chartDom = document.getElementById(id);
+            if (chartDom) {
+                const chart = echarts.getInstanceByDom(chartDom);
+                if (chart) chart.resize();
+            }
+        });
+    });
+})();
+</script>

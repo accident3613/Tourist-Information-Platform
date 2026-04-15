@@ -39,4 +39,34 @@ public class SiteServiceImpl implements SiteService {
     public int countSearchSites(String keyword) {
         return siteMap.countByKeyword(keyword);
     }
+
+    @Override
+    public Site_list saveSite(Site_list site) {
+        if (site.getId() == 0) {
+            siteMap.insertSite(site);
+        } else {
+            siteMap.updateSite(site);
+        }
+        return site;
+    }
+
+    @Override
+    public boolean deleteSite(int id) {
+        return siteMap.deleteSite(id) > 0;
+    }
+
+    @Override
+    public List<Site_list> getSitesByRating(double minRating, double maxRating, int start) {
+        return siteMap.findByRating(minRating, maxRating, start);
+    }
+
+    @Override
+    public List<Site_list> searchSitesByRating(String keyword, double minRating, double maxRating, int start) {
+        return siteMap.searchByRatingAndKeyword(minRating, maxRating, keyword, start);
+    }
+
+    @Override
+    public List<Site_list> getAllSites() {
+        return siteMap.findAll();
+    }
 }
