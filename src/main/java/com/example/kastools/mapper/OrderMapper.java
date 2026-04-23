@@ -33,8 +33,14 @@ public interface OrderMapper {
     @Select("SELECT * FROM orders WHERE username = #{username} ORDER BY created_at DESC")
     List<java.util.Map<String, Object>> findOrdersByUsername(String username);
 
+    @Select("SELECT * FROM orders ORDER BY created_at DESC LIMIT #{offset}, #{pageSize}")
+    List<java.util.Map<String, Object>> findAllOrdersWithPaging(@Param("offset") int offset, @Param("pageSize") int pageSize);
+
     @Select("SELECT * FROM orders ORDER BY created_at DESC")
     List<java.util.Map<String, Object>> findAllOrders();
+
+    @Select("SELECT COUNT(*) FROM orders")
+    int countAllOrders();
 
     @Update("UPDATE orders SET status = 'cancelled' WHERE order_id = #{orderId}")
     int cancelOrder(String orderId);

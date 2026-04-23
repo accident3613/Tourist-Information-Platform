@@ -1,12 +1,14 @@
 package com.example.kastools.service.impl;
 
 import com.alibaba.fastjson2.JSON;
+import com.example.kastools.entity.Activity;
 import com.example.kastools.entity.OrderItem;
 import com.example.kastools.entity.Result;
 import com.example.kastools.entity.Ticket;
 import com.example.kastools.mapper.OrderMapper;
 import com.example.kastools.mapper.SiteMap;
 import com.example.kastools.mapper.TicketMapper;
+import com.example.kastools.service.ActivityService;
 import com.example.kastools.service.OrderService;
 import com.example.kastools.utils.Jwt;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -31,6 +34,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private Jwt jwt;
+
+    @Autowired
+    private ActivityService activityService;
 
     @Override
     @Transactional
@@ -53,11 +59,16 @@ public class OrderServiceImpl implements OrderService {
             return result;
         }
 
+        Double ticketPrice = ticket.getPrice();
+        Activity activity = activityService.getActiveActivityBySiteId(ticket.getSite_id());
+        if (activity != null && ticket.getPromoPrice() != null) {
+            ticketPrice = ticket.getPromoPrice().doubleValue();
+        }
+
         String orderId = UUID.randomUUID().toString();
         String orderNo = "ORD" + System.currentTimeMillis();
-        Double totalPrice = ticket.getPrice() * quantity;
+        Double totalPrice = ticketPrice * quantity;
         
-        // 设置过期日期为15天后
         LocalDateTime expireDate = LocalDateTime.now().plusDays(15);
 
         int insertResult = orderMapper.insertOrder(
@@ -83,7 +94,7 @@ public class OrderServiceImpl implements OrderService {
         orderItem.setOrder_id(orderId);
         orderItem.setTicket_id(ticketId);
         orderItem.setTicket_name(ticket.getName());
-        orderItem.setTicket_price(ticket.getPrice());
+        orderItem.setTicket_price(ticketPrice);
         orderItem.setQuantity(quantity);
         orderItem.setSubtotal(totalPrice);
 
@@ -162,8 +173,19 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<Map<String, Object>> getAllOrders() {
-        return orderMapper.findAllOrders();
+    public Map<String, Object> getAllOrdersWithPaging(int page, int pageSize) {
+        Map<String, Object> result = new HashMap<>();
+        int offset = (page - 1) * pageSize;
+        List<Map<String, Object>> orders = orderMapper.findAllOrdersWithPaging(offset, pageSize);
+        int total = orderMapper.countAllOrders();
+        int totalPages = (int) Math.ceil((double) total / pageSize);
+        
+        result.put("list", orders);
+        result.put("total", total);
+        result.put("page", page);
+        result.put("pageSize", pageSize);
+        result.put("totalPages", totalPages);
+        return result;
     }
 
     @Override

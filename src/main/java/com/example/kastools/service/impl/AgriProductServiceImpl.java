@@ -7,7 +7,9 @@ import com.example.kastools.service.AgriProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class AgriProductServiceImpl implements AgriProductService {
@@ -28,6 +30,20 @@ public class AgriProductServiceImpl implements AgriProductService {
     @Override
     public List<AgriProduct> getAllProducts(int start) {
         return agriProductMapper.findAll(start);
+    }
+
+    @Override
+    public Map<String, Object> getAllProductsWithPaging(int page, int pageSize) {
+        Map<String, Object> result = new HashMap<>();
+        int offset = (page - 1) * pageSize;
+        List<AgriProduct> list = agriProductMapper.findAllWithPaging(offset, pageSize);
+        int total = agriProductMapper.countAll();
+        int totalPages = (int) Math.ceil((double) total / pageSize);
+        
+        result.put("list", list);
+        result.put("total", total);
+        result.put("totalPages", totalPages);
+        return result;
     }
 
     @Override

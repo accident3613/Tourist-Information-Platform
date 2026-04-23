@@ -9,6 +9,8 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Results;
+import org.apache.ibatis.annotations.Result;
 
 import java.util.List;
 
@@ -39,7 +41,7 @@ public interface SiteMap {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertSite(Site_list site);
 
-    @Update("UPDATE site_list SET name = #{name}, rating = #{rating}, icon = #{icon}, arating = #{arating}, number = #{number}, description = #{description} WHERE id = #{id}")
+    @Update("UPDATE site_list SET name = #{name}, rating = #{rating}, icon = COALESCE(#{icon}, icon), arating = #{arating}, description = #{description} WHERE id = #{id}")
     int updateSite(Site_list site);
 
     @Delete("DELETE FROM site_list WHERE id = #{id}")
@@ -47,6 +49,22 @@ public interface SiteMap {
 
     @Select("SELECT * FROM site_list WHERE rating >= #{minRating} AND rating < #{maxRating} LIMIT #{start},5")
     List<Site_list> findByRating(@Param("minRating") double minRating, @Param("maxRating") double maxRating, @Param("start") int start);
+
+    @Select("SELECT s.*, COUNT(c.site_id) as collection_count FROM site_list s " +
+            "LEFT JOIN collections c ON s.id = c.site_id " +
+            "GROUP BY s.id " +
+            "ORDER BY collection_count DESC " +
+            "LIMIT #{limit}")
+    @Results({
+        @Result(property = "id", column = "id"),
+        @Result(property = "name", column = "name"),
+        @Result(property = "rating", column = "rating"),
+        @Result(property = "icon", column = "icon"),
+        @Result(property = "arating", column = "arating"),
+        @Result(property = "number", column = "number"),
+        @Result(property = "description", column = "description")
+    })
+    List<Site_list> findTopByCollectionCount(@Param("limit") int limit);
 
     @Select("SELECT * FROM site_list WHERE rating >= #{minRating} AND rating < #{maxRating} AND name LIKE CONCAT('%', #{keyword}, '%') LIMIT #{start},5")
     List<Site_list> searchByRatingAndKeyword(@Param("minRating") double minRating, @Param("maxRating") double maxRating, @Param("keyword") String keyword, @Param("start") int start);

@@ -809,6 +809,19 @@
                 <p class="description-text" id="siteDescription">暂无描述</p>
             </div>
 
+            <!-- 图片画廊 -->
+            <div class="gallery-section">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#667eea">
+                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                    </svg>
+                    景点相册
+                </h2>
+                <div id="galleryGrid" class="gallery-grid">
+                    <!-- 图片将在这里动态加载 -->
+                </div>
+            </div>
+
             <!-- 农特产按钮 -->
             <div style="margin-bottom: 30px; text-align: center;">
                 <button class="buy-btn" onclick="goToAgriProducts()" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); display: inline-flex; align-items: center; gap: 10px; padding: 15px 40px;">
@@ -827,19 +840,6 @@
                 </h2>
                 <div id="ticketList" class="ticket-list">
                     <!-- 门票列表将在这里动态加载 -->
-                </div>
-            </div>
-
-            <!-- 图片画廊 -->
-            <div class="gallery-section">
-                <h2 class="section-title">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#667eea">
-                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
-                    </svg>
-                    景点相册
-                </h2>
-                <div id="galleryGrid" class="gallery-grid">
-                    <!-- 图片将在这里动态加载 -->
                 </div>
             </div>
 
@@ -1015,17 +1015,26 @@
         // 加载门票列表
         function loadTickets(siteId, token) {
             console.log('开始加载门票，siteId:', siteId);
-            fetch(`/ticket/list?siteId=${siteId}`, {
-                method: 'GET',
-                headers: {
-                    'token': token
+            
+            var hasActiveActivity = false;
+            
+            fetch('/activity/site/' + siteId, {
+                headers: { 'token': token }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1 && result.data && result.data !== 'null') {
+                    hasActiveActivity = true;
                 }
+                return fetch('/ticket/list?siteId=' + siteId, {
+                    method: 'GET',
+                    headers: { 'token': token }
+                });
             })
             .then(response => response.json())
             .then(result => {
                 const ticketList = document.getElementById('ticketList');
                 
-                // 调试输出
                 console.log('门票列表返回结果:', result);
                 
                 if (result.code !== 1) {
@@ -1038,7 +1047,6 @@
                     return;
                 }
                 
-                // 解析String类型的data
                 let tickets = result.data;
                 console.log('原始data:', tickets);
                 
@@ -1061,8 +1069,19 @@
                         console.log('单个门票:', ticket);
                         const id = ticket.id;
                         const name = ticket.name || '未知门票';
-                        const price = ticket.price || 0;
+                        const originalPrice = ticket.price || 0;
+                        const promoPrice = ticket.promoPrice;
+                        const displayPrice = (hasActiveActivity && promoPrice) ? promoPrice : originalPrice;
                         const description = ticket.description || '暂无说明';
+                        
+                        var priceHtml = '';
+                        if (hasActiveActivity && promoPrice) {
+                            priceHtml = '<div class="ticket-price" style="color: #f5576c;">¥' + promoPrice + '</div>' +
+                                '<div class="ticket-original-price">¥' + originalPrice + '</div>';
+                        } else {
+                            priceHtml = '<div class="ticket-price">¥' + originalPrice + '</div>';
+                        }
+                        
                         return `
                         <div class="ticket-item">
                             <div class="ticket-info">
@@ -1070,15 +1089,14 @@
                                 <div class="ticket-desc">${description}</div>
                             </div>
                             <div class="ticket-price-box">
-                                <div class="ticket-price">¥${price}</div>
-                                ${ticket.originalPrice ? `<div class="ticket-original-price">¥${ticket.originalPrice}</div>` : ''}
+                                ${priceHtml}
                             </div>
                             <div class="quantity-selector">
                                 <button class="quantity-btn" onclick="changeQuantity(${id}, -1)">-</button>
                                 <span class="quantity-display" id="quantity-${id}">1</span>
                                 <button class="quantity-btn" onclick="changeQuantity(${id}, 1)">+</button>
                             </div>
-                            <button class="buy-btn" onclick="buyTicket(${id}, '${name}', ${price})">立即购买</button>
+                            <button class="buy-btn" onclick="buyTicket(${id}, '${name}', ${displayPrice})">立即购买</button>
                         </div>
                     `}).join('');
                 }

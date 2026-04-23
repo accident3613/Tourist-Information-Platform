@@ -22,6 +22,7 @@ public class IcptConf implements WebMvcConfigurer {
                     "/order/**",
                     "/comment/**",
                     "/upload",
+                    "/upload/site-icon",
                     "/sicon",
                     "/icon",
                     "/error",

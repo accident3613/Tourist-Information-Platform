@@ -26,4 +26,6 @@ public interface SiteService {
     List<Site_list> searchSitesByRating(String keyword, double minRating, double maxRating, int start);
 
     List<Site_list> getAllSites();
+
+    List<Site_list> getTopSitesByCollectionCount(int limit);
 }

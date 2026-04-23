@@ -106,6 +106,208 @@
             width: 100%;
         }
 
+        /* 活动轮播 */
+        .activity-banner {
+            position: relative;
+            z-index: 10;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .activity-carousel {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .activity-slides {
+            display: flex;
+            transition: transform 0.5s ease;
+        }
+
+        .activity-slide {
+            min-width: 100%;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .activity-slide img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .activity-slide-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 30px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: white;
+        }
+
+        .activity-slide-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .activity-slide-desc {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .activity-indicators {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 5;
+        }
+
+        .activity-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .activity-indicator.active {
+            background: white;
+            transform: scale(1.2);
+        }
+
+        .activity-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            color: white;
+            font-size: 24px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 5;
+        }
+
+        .activity-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .activity-nav-btn.prev {
+            left: 10px;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .activity-nav-btn.next {
+            right: 10px;
+            border-radius: 10px 0 0 10px;
+        }
+
+        /* 热门景点 */
+        .hot-sites-section {
+            position: relative;
+            z-index: 10;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .hot-sites-title {
+            text-align: center;
+            color: white;
+            font-size: 32px;
+            font-weight: 300;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .hot-sites-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 992px) {
+            .hot-sites-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .hot-sites-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .hot-site-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .hot-site-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .hot-site-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .hot-site-content {
+            padding: 20px;
+        }
+
+        .hot-site-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .hot-site-rating {
+            color: #f5a623;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .hot-site-desc {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .hot-site-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
         /* 主标题 */
         .hero-section {
             position: relative;
@@ -551,10 +753,20 @@
         </nav>
     </header>
 
-    <!-- 主标题区 -->
-    <section class="hero-section">
-        <h1 class="hero-title">发现精彩景点</h1>
-        <p class="hero-subtitle">探索潭山村美丽风景，开启您的旅程</p>
+    <!-- 活动轮播 -->
+    <div class="activity-banner" id="activityBanner" style="display: none;">
+        <div class="activity-carousel">
+            <div class="activity-slides" id="activitySlides"></div>
+            <button class="activity-nav-btn prev" onclick="prevSlide()">❮</button>
+            <button class="activity-nav-btn next" onclick="nextSlide()">❯</button>
+            <div class="activity-indicators" id="activityIndicators"></div>
+        </div>
+    </div>
+
+    <!-- 热门景点 -->
+    <section class="hot-sites-section" id="hotSitesSection" style="display: none;">
+        <h2 class="hot-sites-title">🔥 热门景点 TOP3</h2>
+        <div class="hot-sites-grid" id="hotSitesGrid"></div>
     </section>
 
     <!-- 搜索区域 -->
@@ -621,6 +833,11 @@
         let maxRating = 5;
         let isFilterMode = false;
 
+        // 活动轮播相关变量
+        let activities = [];
+        let currentSlide = 0;
+        let slideInterval = null;
+
         // 初始化页面
         window.onload = function() {
             const token = localStorage.getItem('token');
@@ -632,11 +849,204 @@
             // 创建背景粒子
             createParticles();
             
+            // 加载活动
+            loadActivities();
+            
+            // 加载热门景点
+            loadHotSites();
+            
             // 先加载用户收藏列表，再加载景点
             loadUserCollections().then(() => {
                 loadSites();
             });
         };
+
+        // 加载热门景点
+        function loadHotSites() {
+            fetch('/site/top/collections?limit=3')
+                .then(response => response.json())
+                .then(result => {
+                    if (result.code === 1) {
+                        var sites = JSON.parse(result.data);
+                        if (sites && sites.length > 0) {
+                            renderHotSites(sites);
+                            document.getElementById('hotSitesSection').style.display = 'block';
+                        }
+                    } else {
+                        console.error('加载热门景点失败:', result.data);
+                    }
+                })
+                .catch(function(error) {
+                    console.error('加载热门景点失败:', error);
+                });
+        }
+
+        // 渲染热门景点
+        function renderHotSites(sites) {
+            var container = document.getElementById('hotSitesGrid');
+            var token = localStorage.getItem('token');
+            var html = sites.map(function(site, index) {
+                var rankBadge = '';
+                if (index === 0) {
+                    rankBadge = '<div class="hot-site-badge">🥇 TOP1</div>';
+                } else if (index === 1) {
+                    rankBadge = '<div class="hot-site-badge" style="background: linear-gradient(135deg, #C0C0C0 0%, #E8E8E8 100%);">🥈 TOP2</div>';
+                } else if (index === 2) {
+                    rankBadge = '<div class="hot-site-badge" style="background: linear-gradient(135deg, #CD7F32 0%, #DAA520 100%);">🥉 TOP3</div>';
+                }
+                
+                var safeName = escapeHtml(site.name || '未知景点');
+                var safeDesc = escapeHtml(site.description || '暂无描述');
+                var iconFileName = site.icon || '';
+                
+                return '<div class="hot-site-card" onclick="goToSiteDetail(' + site.id + ')" style="position: relative;">' +
+                    rankBadge +
+                    '<img class="hot-site-image" data-icon="' + iconFileName + '" data-token="' + token + '" src="/nicon/default.jpg" alt="' + safeName + '">' +
+                    '<div class="hot-site-content">' +
+                        '<div class="hot-site-name">' + safeName + '</div>' +
+                        '<div class="hot-site-rating">⭐ ' + (site.rating || '5.0') + '</div>' +
+                        '<div class="hot-site-desc">' + safeDesc + '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+            container.innerHTML = html;
+            
+            // 加载所有热门景点图片
+            var images = container.querySelectorAll('.hot-site-image');
+            images.forEach(function(img) {
+                if (img.dataset.icon && img.dataset.icon !== 'null' && img.dataset.icon !== '') {
+                    loadHotSiteImage(img);
+                }
+            });
+        }
+
+        // 加载热门景点图片
+        function loadHotSiteImage(imgElement) {
+            var iconFileName = imgElement.dataset.icon;
+            var token = imgElement.dataset.token;
+            
+            if (!iconFileName) return;
+            
+            fetch('/sicon?filePath=' + iconFileName, {
+                method: 'GET',
+                headers: {
+                    'token': token
+                }
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('图片加载失败');
+                }
+                return response.blob();
+            })
+            .then(function(blob) {
+                var imageUrl = URL.createObjectURL(blob);
+                imgElement.src = imageUrl;
+            })
+            .catch(function(error) {
+                console.error('加载热门景点图片失败:', error);
+            });
+        }
+
+        // HTML转义函数，防止XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 跳转到景点详情
+        function goToSiteDetail(siteId) {
+            window.location.href = '/site-detail.html?site_id=' + siteId;
+        }
+
+        // 加载活动
+        function loadActivities() {
+            fetch('/activity/list?limit=3')
+                .then(response => response.json())
+                .then(result => {
+                    if (result.code === 1) {
+                        activities = JSON.parse(result.data);
+                        if (activities && activities.length > 0) {
+                            renderActivities();
+                            document.getElementById('activityBanner').style.display = 'block';
+                            startAutoSlide();
+                        }
+                    }
+                });
+        }
+
+        // 渲染活动轮播
+        function renderActivities() {
+            var slidesContainer = document.getElementById('activitySlides');
+            var indicatorsContainer = document.getElementById('activityIndicators');
+            
+            var slidesHtml = activities.map(function(activity) {
+                return '<div class="activity-slide" onclick="goToActivity(' + activity.id + ')">' +
+                    '<img src="' + (activity.imageUrl || '/images/default-activity.jpg') + '" alt="' + activity.title + '">' +
+                    '<div class="activity-slide-content">' +
+                        '<div class="activity-slide-title">' + activity.title + '</div>' +
+                        '<div class="activity-slide-desc">' + (activity.description || '') + '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+            
+            var indicatorsHtml = activities.map(function(_, index) {
+                return '<div class="activity-indicator ' + (index === 0 ? 'active' : '') + '" onclick="goToSlide(' + index + ')"></div>';
+            }).join('');
+            
+            slidesContainer.innerHTML = slidesHtml;
+            indicatorsContainer.innerHTML = indicatorsHtml;
+        }
+
+        // 切换到指定幻灯片
+        function goToSlide(index) {
+            currentSlide = index;
+            updateSlide();
+        }
+
+        // 上一张
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + activities.length) % activities.length;
+            updateSlide();
+        }
+
+        // 下一张
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % activities.length;
+            updateSlide();
+        }
+
+        // 更新幻灯片显示
+        function updateSlide() {
+            var slidesContainer = document.getElementById('activitySlides');
+            slidesContainer.style.transform = 'translateX(-' + (currentSlide * 100) + '%)';
+            
+            var indicators = document.querySelectorAll('.activity-indicator');
+            indicators.forEach(function(indicator, index) {
+                if (index === currentSlide) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+            });
+        }
+
+        // 开始自动轮播
+        function startAutoSlide() {
+            if (slideInterval) {
+                clearInterval(slideInterval);
+            }
+            slideInterval = setInterval(function() {
+                nextSlide();
+            }, 3000);
+        }
+
+        // 跳转到活动详情页
+        function goToActivity(id) {
+            window.location.href = '/activity.html?id=' + id;
+        }
 
         // 加载用户收藏列表
         function loadUserCollections() {
@@ -773,7 +1183,7 @@
             const sitesGrid = document.getElementById('sitesGrid');
             
             const cardsHTML = sites.map((site, index) => {
-                const iconFileName = site.icon ? site.icon.split('/').pop() : null;
+                const iconFileName = site.icon || null;
                 // 检查该景点是否已收藏
                 const isCollected = userCollections.includes(site.id);
                 const collectedClass = isCollected ? 'collected' : '';

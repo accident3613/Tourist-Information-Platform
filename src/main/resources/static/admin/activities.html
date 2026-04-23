@@ -1,0 +1,386 @@
+<!-- 活动管理页面 -->
+<div class="content-card">
+    <div class="card-header">
+        <h3 class="card-title">活动列表</h3>
+        <button class="btn btn-primary" onclick="openAddActivityModal()">+ 新建活动</button>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>活动标题</th>
+                <th>关联景点</th>
+                <th>开始时间</th>
+                <th>结束时间</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="activityTable">
+            <tr>
+                <td colspan="7" style="text-align: center; color: #888;">加载中...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- 新增/编辑活动模态框 -->
+<div id="activityModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; overflow-y: auto;">
+    <div style="background: #1a1a2e; border-radius: 12px; padding: 30px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1);">
+        <h3 id="activityModalTitle" style="color: #4CAF50; margin-bottom: 20px;">新建活动</h3>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; color: #fff; margin-bottom: 5px;">活动标题</label>
+            <input type="text" id="activityTitle" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;" placeholder="请输入活动标题">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; color: #fff; margin-bottom: 5px;">活动描述</label>
+            <textarea id="activityDescription" rows="3" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff; resize: vertical;" placeholder="请输入活动描述"></textarea>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; color: #fff; margin-bottom: 5px;">活动图片</label>
+            <input type="file" id="activityImage" accept="image/*" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; color: #fff; margin-bottom: 5px;">关联景点</label>
+            <select id="activitySiteId" onchange="loadSiteTickets()" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: #16213e; color: #fff;">
+                <option value="" style="background: #16213e; color: #fff;">请选择景点</option>
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+            <div style="flex: 1;">
+                <label style="display: block; color: #fff; margin-bottom: 5px;">开始时间</label>
+                <input type="datetime-local" id="activityStartTime" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;">
+            </div>
+            <div style="flex: 1;">
+                <label style="display: block; color: #fff; margin-bottom: 5px;">结束时间</label>
+                <input type="datetime-local" id="activityEndTime" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff;">
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; color: #fff; margin-bottom: 10px;">门票促销价格设置</label>
+            <div id="ticketPromoList" style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 15px;">
+                <p style="color: #888; text-align: center;">请先选择景点</p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" onclick="closeActivityModal()" style="flex: 1; background: rgba(255,255,255,0.1); color: #fff;">取消</button>
+            <button class="btn btn-primary" onclick="saveActivity()" style="flex: 1;">保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var editingActivityId = null;
+    var sites = [];
+    var currentTickets = [];
+
+    window.activitiesInit = function() {
+        loadSites();
+        loadActivities();
+    };
+
+    function loadSites() {
+        var adminToken = localStorage.getItem('adminToken');
+        fetch('/site/list?start=0', {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.length > 0) {
+                sites = data;
+                var select = document.getElementById('activitySiteId');
+                select.innerHTML = '<option value="" style="background: #16213e; color: #fff;">请选择景点</option>' +
+                    sites.map(s => '<option value="' + s.id + '" style="background: #16213e; color: #fff;">' + s.name + '</option>').join('');
+            }
+        });
+    }
+
+    function loadActivities() {
+        var adminToken = localStorage.getItem('adminToken');
+        fetch('/admin/activity/list', {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                var activities = JSON.parse(result.data);
+                renderActivities(activities);
+            } else {
+                document.getElementById('activityTable').innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">暂无数据</td></tr>';
+            }
+        })
+        .catch(function() {
+            document.getElementById('activityTable').innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">加载失败</td></tr>';
+        });
+    }
+
+    function renderActivities(activities) {
+        var tbody = document.getElementById('activityTable');
+        if (!activities || activities.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">暂无活动</td></tr>';
+            return;
+        }
+
+        var now = new Date();
+        tbody.innerHTML = activities.map(function(activity) {
+            var endDate = new Date(activity.endTime);
+            var isEnded = now > endDate;
+            var statusClass = isEnded ? 'status-inactive' : 'status-active';
+            var statusText = isEnded ? '已结束' : '进行中';
+            var startTime = activity.startTime ? new Date(activity.startTime).toLocaleString('zh-CN') : '-';
+            var endTime = activity.endTime ? new Date(activity.endTime).toLocaleString('zh-CN') : '-';
+
+            return '<tr>' +
+                '<td>' + activity.id + '</td>' +
+                '<td>' + activity.title + '</td>' +
+                '<td>' + (activity.siteName || '-') + '</td>' +
+                '<td>' + startTime + '</td>' +
+                '<td>' + endTime + '</td>' +
+                '<td><span class="status-badge ' + statusClass + '">' + statusText + '</span></td>' +
+                '<td><div class="action-btns">' +
+                    '<button class="action-btn edit" onclick="editActivity(' + activity.id + ')">编辑</button>' +
+                    '<button class="action-btn delete" onclick="deleteActivity(' + activity.id + ', \'' + activity.title + '\')">删除</button>' +
+                '</div></td>' +
+            '</tr>';
+        }).join('');
+    }
+
+    window.openAddActivityModal = function() {
+        editingActivityId = null;
+        document.getElementById('activityModalTitle').textContent = '新建活动';
+        document.getElementById('activityTitle').value = '';
+        document.getElementById('activityDescription').value = '';
+        document.getElementById('activitySiteId').value = '';
+        document.getElementById('activityStartTime').value = '';
+        document.getElementById('activityEndTime').value = '';
+        document.getElementById('activityImage').value = '';
+        document.getElementById('ticketPromoList').innerHTML = '<p style="color: #888; text-align: center;">请先选择景点</p>';
+        document.getElementById('activityModal').style.display = 'flex';
+    };
+
+    window.editActivity = function(id) {
+        editingActivityId = id;
+        var adminToken = localStorage.getItem('adminToken');
+        
+        fetch('/admin/activity/' + id, {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                var activity = JSON.parse(result.data);
+                document.getElementById('activityModalTitle').textContent = '编辑活动';
+                document.getElementById('activityTitle').value = activity.title;
+                document.getElementById('activityDescription').value = activity.description || '';
+                document.getElementById('activitySiteId').value = activity.siteId;
+                
+                if (activity.startTime) {
+                    var startDt = activity.startTime.replace('T', ' ').substring(0, 16).replace(' ', 'T');
+                    document.getElementById('activityStartTime').value = startDt;
+                }
+                if (activity.endTime) {
+                    var endDt = activity.endTime.replace('T', ' ').substring(0, 16).replace(' ', 'T');
+                    document.getElementById('activityEndTime').value = endDt;
+                }
+                
+                document.getElementById('activityImage').value = '';
+                loadSiteTicketsForEdit(activity.siteId);
+                document.getElementById('activityModal').style.display = 'flex';
+            } else {
+                alert(result.data || '获取活动信息失败');
+            }
+        });
+    };
+
+    window.closeActivityModal = function() {
+        document.getElementById('activityModal').style.display = 'none';
+    };
+
+    window.loadSiteTickets = function() {
+        var siteId = document.getElementById('activitySiteId').value;
+        if (!siteId) {
+            document.getElementById('ticketPromoList').innerHTML = '<p style="color: #888; text-align: center;">请先选择景点</p>';
+            return;
+        }
+
+        var adminToken = localStorage.getItem('adminToken');
+        fetch('/ticket/list/all?siteId=' + siteId, {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                var tickets = JSON.parse(result.data);
+                currentTickets = tickets;
+                renderTicketPromoList(tickets);
+            }
+        });
+    };
+
+    function loadSiteTicketsForEdit(siteId) {
+        var adminToken = localStorage.getItem('adminToken');
+        fetch('/ticket/list/all?siteId=' + siteId, {
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                var tickets = JSON.parse(result.data);
+                currentTickets = tickets;
+                renderTicketPromoList(tickets);
+            }
+        });
+    }
+
+    function renderTicketPromoList(tickets) {
+        var container = document.getElementById('ticketPromoList');
+        if (!tickets || tickets.length === 0) {
+            container.innerHTML = '<p style="color: #888; text-align: center;">该景点暂无门票</p>';
+            return;
+        }
+
+        var html = tickets.map(function(ticket) {
+            return '<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">' +
+                '<div>' +
+                    '<span style="color: #fff;">' + ticket.name + '</span>' +
+                    '<span style="color: #888; margin-left: 10px;">原价: ¥' + ticket.price + '</span>' +
+                '</div>' +
+                '<div style="display: flex; align-items: center; gap: 10px;">' +
+                    '<span style="color: #888;">促销价:</span>' +
+                    '<input type="number" id="promo_' + ticket.id + '" value="' + (ticket.promoPrice || '') + '" step="0.01" min="0" style="width: 100px; padding: 5px 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; background: rgba(255,255,255,0.05); color: #fff;" placeholder="促销价">' +
+                '</div>' +
+            '</div>';
+        }).join('');
+        container.innerHTML = html;
+    }
+
+    window.saveActivity = function() {
+        var title = document.getElementById('activityTitle').value.trim();
+        var description = document.getElementById('activityDescription').value.trim();
+        var siteId = document.getElementById('activitySiteId').value;
+        var startTime = document.getElementById('activityStartTime').value;
+        var endTime = document.getElementById('activityEndTime').value;
+        var imageFile = document.getElementById('activityImage').files[0];
+
+        if (!title) {
+            alert('请输入活动标题');
+            return;
+        }
+        if (!siteId) {
+            alert('请选择关联景点');
+            return;
+        }
+        if (!startTime || !endTime) {
+            alert('请设置活动时间');
+            return;
+        }
+
+        var ticketPromoPrices = currentTickets.map(function(ticket) {
+            var promoInput = document.getElementById('promo_' + ticket.id);
+            var promoPrice = promoInput ? promoInput.value : '';
+            return {
+                ticketId: ticket.id,
+                promoPrice: promoPrice || null
+            };
+        }).filter(function(p) { return p.promoPrice && parseFloat(p.promoPrice) > 0; });
+
+        var adminToken = localStorage.getItem('adminToken');
+
+        function doSave(imageUrl) {
+            var data = {
+                title: title,
+                description: description,
+                imageUrl: imageUrl || '',
+                siteId: parseInt(siteId),
+                startTime: startTime + ':00',
+                endTime: endTime + ':00',
+                ticketPromoPrices: ticketPromoPrices
+            };
+
+            if (editingActivityId) {
+                data.id = editingActivityId;
+            }
+
+            var url = editingActivityId ? '/admin/activity/update' : '/admin/activity/create';
+            var method = editingActivityId ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    'token': adminToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    alert('保存成功');
+                    closeActivityModal();
+                    loadActivities();
+                } else {
+                    alert(result.data || '保存失败');
+                }
+            })
+            .catch(function() {
+                alert('保存失败');
+            });
+        }
+
+        if (imageFile) {
+            var formData = new FormData();
+            formData.append('file', imageFile);
+
+            fetch('/upload', {
+                method: 'POST',
+                headers: { 'token': adminToken },
+                body: formData
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result.includes('successfully')) {
+                    doSave(result);
+                } else {
+                    alert('图片上传失败');
+                }
+            })
+            .catch(function() {
+                alert('图片上传失败');
+            });
+        } else {
+            doSave('');
+        }
+    };
+
+    window.deleteActivity = function(id, title) {
+        if (!confirm('确定要删除活动 "' + title + '" 吗？删除后该景点门票的促销价格将被清除。')) return;
+
+        var adminToken = localStorage.getItem('adminToken');
+        fetch('/admin/activity/delete/' + id, {
+            method: 'DELETE',
+            headers: { 'token': adminToken }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 1) {
+                alert('删除成功');
+                loadActivities();
+            } else {
+                alert(result.data || '删除失败');
+            }
+        })
+        .catch(function() {
+            alert('删除失败');
+        });
+    };
+})();
+</script>

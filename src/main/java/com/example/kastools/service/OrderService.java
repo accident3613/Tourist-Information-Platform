@@ -19,5 +19,5 @@ public interface OrderService {
 
     List<Map<String, Object>> getUserOrders(HttpServletRequest request);
 
-    List<Map<String, Object>> getAllOrders();
+    Map<String, Object> getAllOrdersWithPaging(int page, int pageSize);
 }

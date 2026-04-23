@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/admin/agri")
@@ -27,6 +28,8 @@ public class AdminAgriController {
     @GetMapping("/list")
     public Result getAgriProducts(
             @RequestParam(value = "siteId", required = false) Long siteId,
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
             HttpServletRequest request) {
         // 获取当前管理员
         Admin admin = permissionService.getCurrentAdmin(request);
@@ -40,11 +43,15 @@ public class AdminAgriController {
         Result result = new Result();
         try {
             List<AgriProduct> products;
+            int total = 0;
+            int totalPages = 0;
 
             // 运营人员只能查看自己景点的农特产
             if (permissionService.isOperator(admin)) {
                 if (admin.getSite_id() != null) {
                     products = agriProductService.getProductsBySiteId(admin.getSite_id());
+                    total = products.size();
+                    totalPages = (int) Math.ceil((double) total / pageSize);
                 } else {
                     result.setCode(0);
                     result.setData("未分配管理景点");
@@ -54,13 +61,23 @@ public class AdminAgriController {
                 // 超级管理员和管理员可以查看所有或指定景点的农特产
                 if (siteId != null) {
                     products = agriProductService.getProductsBySiteId(siteId);
+                    total = products.size();
+                    totalPages = (int) Math.ceil((double) total / pageSize);
                 } else {
-                    products = agriProductService.getAllProducts(0);
+                    Map<String, Object> pagingResult = agriProductService.getAllProductsWithPaging(page, pageSize);
+                    products = (List<AgriProduct>) pagingResult.get("list");
+                    total = (Integer) pagingResult.get("total");
+                    totalPages = (Integer) pagingResult.get("totalPages");
                 }
             }
 
+            JSONObject responseData = new JSONObject();
+            responseData.put("list", products);
+            responseData.put("total", total);
+            responseData.put("totalPages", totalPages);
+
             result.setCode(1);
-            result.setData(JSON.toJSONString(products));
+            result.setData(JSON.toJSONString(responseData));
         } catch (Exception e) {
             result.setCode(0);
             result.setData("获取农特产失败");

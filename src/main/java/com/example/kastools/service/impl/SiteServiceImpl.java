@@ -69,4 +69,9 @@ public class SiteServiceImpl implements SiteService {
     public List<Site_list> getAllSites() {
         return siteMap.findAll();
     }
+
+    @Override
+    public List<Site_list> getTopSitesByCollectionCount(int limit) {
+        return siteMap.findTopByCollectionCount(limit);
+    }
 }

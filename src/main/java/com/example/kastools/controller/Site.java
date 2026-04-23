@@ -28,6 +28,11 @@ public class Site {
         return siteService.getSiteList(start);
     }
 
+    @GetMapping("/all")
+    public List<Site_list> all() {
+        return siteService.getAllSites();
+    }
+
     @PostMapping("/list1")
     public Site_list list1(int site_id) {
         return siteService.getSiteById(site_id);
@@ -103,5 +108,23 @@ public class Site {
             return siteService.searchSitesByRating(keyword, minRating, maxRating, start);
         }
         return siteService.getSitesByRating(minRating, maxRating, start);
+    }
+
+    @GetMapping("/top/collections")
+    public Result getTopSitesByCollectionCount(@RequestParam(defaultValue = "3") int limit) {
+        Result result = new Result();
+        try {
+            if (limit <= 0 || limit > 10) {
+                limit = 3;
+            }
+            List<Site_list> sites = siteService.getTopSitesByCollectionCount(limit);
+            result.setCode(1);
+            result.setData(JSON.toJSONString(sites));
+        } catch (Exception e) {
+            result.setCode(0);
+            result.setData("获取热门景点失败");
+            e.printStackTrace();
+        }
+        return result;
     }
 }

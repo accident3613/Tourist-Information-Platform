@@ -17,6 +17,12 @@ public interface AgriProductMapper {
     @Select("SELECT * FROM agri_product ORDER BY id DESC")
     List<AgriProduct> findAll(@Param("start") int start);
 
+    @Select("SELECT * FROM agri_product ORDER BY id DESC LIMIT #{offset}, #{pageSize}")
+    List<AgriProduct> findAllWithPaging(@Param("offset") int offset, @Param("pageSize") int pageSize);
+
+    @Select("SELECT COUNT(*) FROM agri_product")
+    int countAll();
+
     @Insert("INSERT INTO agri_product (site_id, name, description, price_per_jin, stock, status, rating, sales_count) " +
             "VALUES (#{site_id}, #{name}, #{description}, #{price_per_jin}, #{stock}, #{status}, #{rating}, #{sales_count})")
     @Options(useGeneratedKeys = true, keyProperty = "id")

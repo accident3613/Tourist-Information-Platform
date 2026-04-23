@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/ticket")
@@ -31,6 +32,15 @@ public class TicketController {
         return result;
     }
 
+    @GetMapping("/list/all")
+    public Result listAll(@RequestParam("siteId") Long siteId) {
+        Result result = new Result();
+        List<Ticket> tickets = ticketService.getTicketsBySiteIdAll(siteId);
+        result.setCode(1);
+        result.setData(JSON.toJSONString(tickets));
+        return result;
+    }
+
     @GetMapping("/detail")
     public Result detail(@RequestParam("ticketId") Long ticketId) {
         Result result = new Result();
@@ -46,8 +56,11 @@ public class TicketController {
     }
 
     @GetMapping("/admin/list")
-    public Result adminList(@RequestParam(value = "siteId", required = false) Long siteId, HttpServletRequest request) {
-        // 获取当前管理员
+    public Result adminList(
+            @RequestParam(value = "siteId", required = false) Long siteId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            HttpServletRequest request) {
         Admin admin = permissionService.getCurrentAdmin(request);
         if (admin == null) {
             Result result = new Result();
@@ -57,28 +70,22 @@ public class TicketController {
         }
 
         Result result = new Result();
-        List<Ticket> tickets;
 
-        // 运营人员只能查看自己景点的门票
         if (permissionService.isOperator(admin)) {
             if (admin.getSite_id() != null) {
-                tickets = ticketService.getTicketsBySiteIdAll(admin.getSite_id());
+                List<Ticket> tickets = ticketService.getTicketsBySiteIdAll(admin.getSite_id());
+                result.setCode(1);
+                result.setData(JSON.toJSONString(tickets));
             } else {
                 result.setCode(0);
                 result.setData("未分配管理景点");
-                return result;
             }
         } else {
-            // 超级管理员和管理员可以查看所有或指定景点的门票
-            if (siteId != null) {
-                tickets = ticketService.getTicketsBySiteIdAll(siteId);
-            } else {
-                tickets = ticketService.getAllTickets();
-            }
+            Map<String, Object> data = ticketService.getAllTicketsWithPaging(page, pageSize);
+            result.setCode(1);
+            result.setData(JSON.toJSONString(data));
         }
 
-        result.setCode(1);
-        result.setData(JSON.toJSONString(tickets));
         return result;
     }
 

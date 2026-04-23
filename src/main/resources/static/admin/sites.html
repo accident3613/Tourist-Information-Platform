@@ -139,7 +139,7 @@
 
     window.loadSites = function() {
         const adminToken = localStorage.getItem('adminToken');
-        fetch('/site/list?start=0', {
+        fetch('/site/all', {
             headers: { 'token': adminToken }
         })
         .then(response => response.json())
@@ -162,7 +162,9 @@
             return;
         }
 
-        tbody.innerHTML = sites.map(site => `
+        tbody.innerHTML = sites.map(site => {
+            const descValue = (site.description || '').replace(/'/g, "\\'").replace(/\n/g, "\\n");
+            return `
             <tr>
                 <td>${site.id}</td>
                 <td>${site.name}</td>
@@ -170,12 +172,12 @@
                 <td>${site.number || 0}</td>
                 <td>
                     <div class="action-btns">
-                        <button class="action-btn edit" onclick="editSite(${site.id}, '${site.name}', ${site.rating}, '${site.description || ''}')">编辑</button>
+                        <button class="action-btn edit" onclick="editSite(${site.id}, '${site.name}', ${site.rating}, '${descValue}')">编辑</button>
                         <button class="action-btn delete" onclick="deleteSite(${site.id}, '${site.name}')">删除</button>
                     </div>
                 </td>
             </tr>
-        `).join('');
+        `}).join('');
     };
 
     window.openAddSiteModal = function() {
@@ -216,29 +218,34 @@
         const adminToken = localStorage.getItem('adminToken');
 
         if (imageFile) {
+            // 选择了新图片，上传并更新
             const formData = new FormData();
             formData.append('file', imageFile);
+            const adminToken = localStorage.getItem('adminToken');
 
-            fetch('/upload', {
+            fetch('/upload/site-icon', {
                 method: 'POST',
-                headers: { 'token': adminToken },
+                headers: {
+                    'token': adminToken
+                },
                 body: formData
             })
             .then(response => response.text())
             .then(result => {
-                if (result.includes('successfully')) {
-                    saveSiteInfo(name, rating, description);
+                if (result && result !== '上传失败') {
+                    saveSiteInfo(name, rating, description, result);
                 } else {
                     alert('图片上传失败');
                 }
             })
             .catch(() => alert('图片上传失败'));
         } else {
-            saveSiteInfo(name, rating, description);
+            // 没有选择新图片，不传icon字段，后端会保留原值
+            saveSiteInfo(name, rating, description, null);
         }
     };
 
-    window.saveSiteInfo = function(name, rating, description) {
+    window.saveSiteInfo = function(name, rating, description, iconFileName) {
         const adminToken = localStorage.getItem('adminToken');
         const data = {
             name: name,
@@ -247,6 +254,11 @@
             arating: 0,
             number: 0
         };
+        // 只有当iconFileName有值时才设置icon字段
+        // null表示不修改图片（后端会保留原值）
+        if (iconFileName) {
+            data.icon = iconFileName;
+        }
         if (editingSiteId) {
             data.id = editingSiteId;
         }

@@ -4,22 +4,22 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Ticket {
+public class Activity {
     private Long id;
-    private Long site_id;
-    private String name;
-    private Double price;
-    private Double originalPrice;
-    private BigDecimal promoPrice;
-    private Integer stock;
+    private String title;
     private String description;
-    private Integer status;
+    private String imageUrl;
+    private Long siteId;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private Long createdBy;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    
+    private String siteName;
 }

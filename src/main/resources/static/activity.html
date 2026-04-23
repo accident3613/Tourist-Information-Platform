@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
+    <title>活动详情</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.8;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .back-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .activity-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .activity-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+        }
+
+        .activity-content {
+            padding: 40px;
+        }
+
+        .activity-title {
+            font-size: 32px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .activity-status {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .status-active {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .status-ended {
+            background: #ccc;
+            color: #666;
+        }
+
+        .activity-meta {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .activity-description {
+            color: #666;
+            line-height: 1.8;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .site-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .site-card {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .site-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .site-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+
+        .site-info {
+            flex: 1;
+        }
+
+        .site-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .site-rating {
+            color: #f5a623;
+            font-size: 16px;
+        }
+
+        .all-activities-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .activity-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .activity-item {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .activity-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .activity-item-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .activity-item-content {
+            padding: 15px;
+        }
+
+        .activity-item-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .activity-item-status {
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 400px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo" onclick="window.location.href='/sites.html'">🌍 探索世界</div>
+        <nav class="nav-links">
+            <a href="/sites.html">首页</a>
+            <a href="/user-profile.html">个人中心</a>
+            <a href="#" onclick="logout()">退出</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <button class="back-btn" onclick="history.back()">← 返回</button>
+
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+        </div>
+
+        <div id="content" style="display: none;">
+            <div class="activity-card">
+                <img id="activityImage" class="activity-image" src="" alt="活动图片">
+                <div class="activity-content">
+                    <h1 id="activityTitle" class="activity-title"></h1>
+                    <span id="activityStatus" class="activity-status"></span>
+                    <div class="activity-meta">
+                        <span>📅 开始时间: <span id="startTime"></span></span>
+                        <span>📅 结束时间: <span id="endTime"></span></span>
+                    </div>
+                    <p id="activityDescription" class="activity-description"></p>
+                </div>
+            </div>
+
+            <div class="site-section">
+                <h2 class="section-title">🏞️ 关联景点</h2>
+                <div id="siteCard" class="site-card" onclick="goToSite()">
+                    <img id="siteIcon" class="site-icon" src="" alt="景点图片">
+                    <div class="site-info">
+                        <h3 id="siteName" class="site-name"></h3>
+                        <div class="site-rating">⭐ 评分: <span id="siteRating"></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="all-activities-section">
+                <h2 class="section-title">🎉 所有活动</h2>
+                <div id="activityList" class="activity-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var activityId = null;
+        var siteId = null;
+
+        function getActivityIdFromUrl() {
+            var params = new URLSearchParams(window.location.search);
+            return params.get('id');
+        }
+
+        function loadActivity() {
+            activityId = getActivityIdFromUrl();
+            if (!activityId) {
+                document.getElementById('loading').innerHTML = '<p style="color: white;">活动不存在</p>';
+                return;
+            }
+
+            fetch('/activity/' + activityId)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.code === 1) {
+                        var activity = JSON.parse(result.data);
+                        renderActivity(activity);
+                        loadAllActivities();
+                    } else {
+                        document.getElementById('loading').innerHTML = '<p style="color: white;">' + (result.data || '加载失败') + '</p>';
+                    }
+                })
+                .catch(function() {
+                    document.getElementById('loading').innerHTML = '<p style="color: white;">加载失败</p>';
+                });
+        }
+
+        function renderActivity(activity) {
+            document.getElementById('activityImage').src = activity.imageUrl || '/images/default-activity.jpg';
+            document.getElementById('activityTitle').textContent = activity.title;
+            document.getElementById('activityDescription').textContent = activity.description || '暂无描述';
+            
+            var startTime = activity.startTime ? new Date(activity.startTime).toLocaleString('zh-CN') : '-';
+            var endTime = activity.endTime ? new Date(activity.endTime).toLocaleString('zh-CN') : '-';
+            document.getElementById('startTime').textContent = startTime;
+            document.getElementById('endTime').textContent = endTime;
+
+            var now = new Date();
+            var endDate = new Date(activity.endTime);
+            var statusEl = document.getElementById('activityStatus');
+            if (now > endDate) {
+                statusEl.textContent = '已结束';
+                statusEl.className = 'activity-status status-ended';
+            } else {
+                statusEl.textContent = '进行中';
+                statusEl.className = 'activity-status status-active';
+            }
+
+            siteId = activity.siteId;
+            loadSiteInfo(activity.siteId, activity.siteName);
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+        }
+
+        function loadSiteInfo(siteIdParam, siteName) {
+            fetch('/site/list?start=0')
+                .then(response => response.json())
+                .then(sites => {
+                    var site = sites.find(function(s) { return s.id === siteIdParam; });
+                    if (site) {
+                        document.getElementById('siteIcon').src = site.icon || '/images/default-site.jpg';
+                        document.getElementById('siteName').textContent = site.name;
+                        document.getElementById('siteRating').textContent = site.rating || '5.0';
+                    } else {
+                        document.getElementById('siteName').textContent = siteName || '未知景点';
+                        document.getElementById('siteRating').textContent = '5.0';
+                    }
+                })
+                .catch(function() {
+                    document.getElementById('siteName').textContent = siteName || '未知景点';
+                });
+        }
+
+        function loadAllActivities() {
+            fetch('/activity/all')
+                .then(response => response.json())
+                .then(result => {
+                    if (result.code === 1) {
+                        var activities = JSON.parse(result.data);
+                        renderAllActivities(activities);
+                    }
+                });
+        }
+
+        function renderAllActivities(activities) {
+            var container = document.getElementById('activityList');
+            var html = activities.map(function(activity) {
+                var now = new Date();
+                var endDate = new Date(activity.endTime);
+                var isEnded = now > endDate;
+                var statusClass = isEnded ? 'activity-item-status status-ended' : 'activity-item-status status-active';
+                var statusText = isEnded ? '已结束' : '进行中';
+
+                return '<div class="activity-item" onclick="goToActivity(' + activity.id + ')">' +
+                    '<img class="activity-item-image" src="' + (activity.imageUrl || '/images/default-activity.jpg') + '" alt="' + activity.title + '">' +
+                    '<div class="activity-item-content">' +
+                    '<h3 class="activity-item-title">' + activity.title + '</h3>' +
+                    '<span class="' + statusClass + '">' + statusText + '</span>' +
+                    '</div></div>';
+            }).join('');
+            container.innerHTML = html;
+        }
+
+        function goToSite() {
+            if (siteId) {
+                window.location.href = '/site-detail.html?id=' + siteId;
+            }
+        }
+
+        function goToActivity(id) {
+            window.location.href = '/activity.html?id=' + id;
+        }
+
+        function logout() {
+            var token = localStorage.getItem('token');
+            if (token) {
+                fetch('/logout', {
+                    method: 'POST',
+                    headers: { 'token': token }
+                }).finally(function() {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                });
+            } else {
+                window.location.href = '/login.html';
+            }
+        }
+
+        loadActivity();
+    </script>
+</body>
+</html>

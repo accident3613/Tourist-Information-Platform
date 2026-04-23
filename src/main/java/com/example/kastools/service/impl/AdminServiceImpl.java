@@ -145,14 +145,15 @@ public class AdminServiceImpl implements AdminService {
         if (admin.getStatus() == null) {
             admin.setStatus(1);
         }
-        // 如果不是运营人员，清空site_id
+        // 如果不是运营人员，清空 site_id
         if (!"operator".equals(admin.getRole())) {
             admin.setSite_id(null);
         }
-        // 空字符串转为null
+        // 空字符串转为 null
         if (admin.getName() != null && admin.getName().trim().isEmpty()) {
             admin.setName(null);
         }
+        // 密码明文存储
         adminMapper.insert(admin);
         Result result = new Result();
         result.setCode(1);
@@ -219,6 +220,7 @@ public class AdminServiceImpl implements AdminService {
             result.setData("管理员不存在");
             return result;
         }
+        // 密码明文存储
         adminMapper.updatePassword(id, newPassword);
         Result result = new Result();
         result.setCode(1);
@@ -252,7 +254,7 @@ public class AdminServiceImpl implements AdminService {
     public Result getStats() {
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalUsers", usrMap.findAllUsers().size());
-        stats.put("totalOrders", orderMapper.findAllOrders().size());
+        stats.put("totalOrders", orderMapper.countAllOrders());
         
         Result result = new Result();
         result.setCode(1);

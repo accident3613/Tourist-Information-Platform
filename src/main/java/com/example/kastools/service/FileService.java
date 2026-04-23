@@ -18,4 +18,6 @@ public interface FileService {
     ResponseEntity<Resource> getSiteIcon(String filePath) throws IOException;
 
     CompletableFuture<String> asyncUpload(String username, MultipartFile file) throws IOException;
+
+    String uploadSiteIcon(MultipartFile file) throws IOException;
 }

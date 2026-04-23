@@ -125,4 +125,30 @@ public class FileServiceImpl implements FileService {
         usrMap.upimap(path, username);
         return CompletableFuture.completedFuture("File uploaded successfully!");
     }
+
+    @Override
+    public String uploadSiteIcon(MultipartFile file) throws IOException {
+        if (file.isEmpty()) {
+            return null;
+        }
+        
+        String uploadDir = "src/main/resources/static/sicon/";
+        Path uploadPath = Paths.get(uploadDir);
+        
+        String originalFileName = file.getOriginalFilename();
+        String fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
+        
+        String uuidFileName = UUID.randomUUID() + fileExtension;
+        
+        Path filePath = uploadPath.resolve(uuidFileName);
+        
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+        
+        file.transferTo(filePath);
+        log.info(file.getOriginalFilename() + " 已上传至sicon文件夹");
+        
+        return uuidFileName;
+    }
 }

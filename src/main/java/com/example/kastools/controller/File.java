@@ -34,4 +34,13 @@ public class File {
     public ResponseEntity<Resource> sicon(@RequestParam("filePath") String filePath) throws IOException {
         return fileService.getSiteIcon(filePath);
     }
+
+    @PostMapping("/upload/site-icon")
+    public String uploadSiteIcon(@RequestParam("file") MultipartFile file) throws IOException {
+        String fileName = fileService.uploadSiteIcon(file);
+        if (fileName != null) {
+            return fileName;
+        }
+        return "上传失败";
+    }
 }

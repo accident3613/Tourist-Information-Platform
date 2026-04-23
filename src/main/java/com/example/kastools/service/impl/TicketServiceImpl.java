@@ -6,7 +6,9 @@ import com.example.kastools.service.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class TicketServiceImpl implements TicketService {
@@ -27,6 +29,22 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public List<Ticket> getAllTickets() {
         return ticketMapper.findAll();
+    }
+
+    @Override
+    public Map<String, Object> getAllTicketsWithPaging(int page, int pageSize) {
+        Map<String, Object> result = new HashMap<>();
+        int offset = (page - 1) * pageSize;
+        List<Ticket> tickets = ticketMapper.findAllWithPaging(offset, pageSize);
+        int total = ticketMapper.countAll();
+        int totalPages = (int) Math.ceil((double) total / pageSize);
+        
+        result.put("list", tickets);
+        result.put("total", total);
+        result.put("page", page);
+        result.put("pageSize", pageSize);
+        result.put("totalPages", totalPages);
+        return result;
     }
 
     @Override

@@ -28,12 +28,7 @@ public class log_IC implements HandlerInterceptor {
             System.out.println("static method");
             return true;
         }
-        
-        // 如果是OPTIONS跨域预检请求，直接放行
-        if ("OPTIONS".equals(request.getMethod())) {
-            System.out.println("OPTIONS预检请求，直接放行");
-            return true;
-        }
+
         // 如果是/error请求，直接放行（Spring Boot错误处理）
         if ("/error".equals(request.getRequestURI())) {
             System.out.println("错误处理请求，直接放行");

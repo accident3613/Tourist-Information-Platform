@@ -11,7 +11,6 @@ import com.example.kastools.mapper.SiteMap;
 import com.example.kastools.service.ExcelImportService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,8 +34,6 @@ public class ExcelImportServiceImpl implements ExcelImportService {
 
     @Autowired
     private AgriOrderMapper agriOrderMapper;
-
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
     public Result importSites(MultipartFile file) {
@@ -169,7 +166,7 @@ public class ExcelImportServiceImpl implements ExcelImportService {
                         continue;
                     }
                     
-                    admin.setPassword(passwordEncoder.encode(admin.getPassword()));
+                    // 密码明文存储
                     admins.add(admin);
                 } catch (Exception e) {
                     errors.add("第" + lineNumber + "行: " + e.getMessage());

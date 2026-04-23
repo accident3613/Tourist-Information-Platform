@@ -359,6 +359,22 @@
             color: white;
         }
 
+        /* 农特产订单样式 */
+        .agri-order-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 8px;
+            background-color: #9c27b0;
+            color: white;
+        }
+
+        .product-name {
+            color: #4CAF50;
+            font-weight: 500;
+        }
+
         /* 收藏列表样式 */
         .collection-section {
             margin-top: 30px;
@@ -524,11 +540,32 @@
             </div>
         </div>
 
+        <!-- 支付农特产订单弹窗 -->
+        <div id="payAgriOrderModal" class="modal" style="display: none;">
+            <div class="modal-content" style="text-align: center;">
+                <h3>请扫码支付</h3>
+                <div style="font-size: 28px; color: #4CAF50; margin: 15px 0; font-weight: bold;" id="payAgriOrderAmount">¥0.00</div>
+                <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <img src="/skm.png" alt="收款码" style="max-width: 200px; width: 100%;">
+                </div>
+                <p style="color: #aaa; margin: 10px 0;">请使用微信或支付宝扫码支付</p>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-secondary" onclick="closePayAgriOrderModal()" style="flex: 1;">取消</button>
+                    <button class="btn btn-primary" onclick="confirmPayAgriOrder()" style="flex: 1;">我已付款</button>
+                </div>
+            </div>
+        </div>
+
         <!-- 统计概览 -->
         <div class="stats-row">
             <div class="stat-card">
-                <h3>我的订单</h3>
+                <h3>门票订单</h3>
                 <strong id="orderCount">0</strong>
+                <p>笔订单</p>
+            </div>
+            <div class="stat-card">
+                <h3>农特产订单</h3>
+                <strong id="agriOrderCount">0</strong>
                 <p>笔订单</p>
             </div>
             <div class="stat-card">
@@ -537,20 +574,24 @@
                 <p>笔待付</p>
             </div>
             <div class="stat-card">
-                <h3>已完成</h3>
-                <strong id="completedCount">0</strong>
-                <p>笔完成</p>
-            </div>
-            <div class="stat-card">
                 <h3>我的收藏</h3>
                 <strong id="favoriteCount">0</strong>
                 <p>个景点</p>
             </div>
         </div>
 
-        <!-- 订单列表 -->
-        <h2 class="section-title">我的订单</h2>
+        <!-- 门票订单列表 -->
+        <h2 class="section-title">🎫 门票订单</h2>
         <div class="order-list" id="orderList">
+            <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <p>加载中...</p>
+            </div>
+        </div>
+
+        <!-- 农特产订单列表 -->
+        <h2 class="section-title">🌾 农特产订单</h2>
+        <div class="order-list" id="agriOrderList">
             <div class="empty-state">
                 <div class="empty-state-icon">📋</div>
                 <p>加载中...</p>
@@ -585,6 +626,7 @@
             }
             loadUserInfo();
             loadOrders();
+            loadAgriOrders();
             loadFavorites();
         };
 
@@ -711,7 +753,7 @@
             document.getElementById('editModal').style.display = 'none';
         }
 
-        // 加载订单列表
+        // 加载门票订单列表
         function loadOrders() {
             fetch('/order/list', {
                 headers: { 'token': token }
@@ -742,7 +784,40 @@
             });
         }
 
-        // 渲染订单列表
+        // 加载农特产订单列表
+        function loadAgriOrders() {
+            fetch('/agri/order/list', {
+                headers: { 'token': token }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    const orders = JSON.parse(result.data);
+                    renderAgriOrders(orders);
+                    updateAgriOrderStats(orders);
+                } else {
+                    document.getElementById('agriOrderList').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <p>暂无农特产订单</p>
+                        </div>
+                    `;
+                    document.getElementById('agriOrderCount').textContent = '0';
+                }
+            })
+            .catch(error => {
+                console.error('获取农特产订单失败:', error);
+                document.getElementById('agriOrderList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <p>加载农特产订单失败</p>
+                    </div>
+                `;
+                document.getElementById('agriOrderCount').textContent = '0';
+            });
+        }
+
+        // 渲染门票订单列表
         function renderOrders(orders) {
             const orderList = document.getElementById('orderList');
 
@@ -750,7 +825,7 @@
                 orderList.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">📋</div>
-                        <p>暂无订单，快去购买门票吧！</p>
+                        <p>暂无门票订单，快去购买门票吧！</p>
                     </div>
                 `;
                 return;
@@ -761,17 +836,14 @@
                 const statusText = getStatusText(order.status);
                 const date = new Date(order.created_at).toLocaleString('zh-CN');
                 
-                // 处理过期时间和使用状态
                 let expireInfo = '';
                 let usedTag = '';
                 const used = order.used !== undefined ? order.used : 0;
                 const expireDate = order.expire_date ? new Date(order.expire_date) : null;
                 const now = new Date();
                 
-                // 判断是否过期
                 const isExpired = expireDate && expireDate < now;
                 
-                // 使用状态标签
                 if (order.status === 'confirmed') {
                     if (used === 1) {
                         usedTag = '<span class="used-tag used-tag-used">已使用</span>';
@@ -782,7 +854,6 @@
                     }
                 }
                 
-                // 过期时间显示
                 if (expireDate && order.status === 'confirmed') {
                     const expireDateStr = expireDate.toLocaleString('zh-CN');
                     let expireClass = 'expire-normal';
@@ -822,7 +893,47 @@
             }).join('');
         }
 
-        // 支付订单
+        // 渲染农特产订单列表
+        function renderAgriOrders(orders) {
+            const orderList = document.getElementById('agriOrderList');
+
+            if (!orders || orders.length === 0) {
+                orderList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🌾</div>
+                        <p>暂无农特产订单，快去购买农特产吧！</p>
+                    </div>
+                `;
+                return;
+            }
+
+            orderList.innerHTML = orders.map(order => {
+                const statusClass = getAgriStatusClass(order.status);
+                const statusText = getAgriStatusText(order.status);
+                const date = new Date(order.create_time).toLocaleString('zh-CN');
+                
+                const payButton = order.status === 'pending' ? 
+                    `<button class="btn btn-primary" onclick="payAgriOrder('${order.order_no}', ${order.total_price})" style="margin-left: 10px;">去支付</button>` : '';
+
+                return `
+                    <div class="order-item">
+                        <div class="order-info">
+                            <h4>订单号：${order.order_no}<span class="agri-order-tag">农特产</span></h4>
+                            <p>商品名称：<span class="product-name">${order.product_name}</span></p>
+                            <p>购买数量：${order.quantity_jin}斤 × ¥${order.price_per_jin}/斤</p>
+                            <p>下单时间：${date}</p>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <div class="order-price">¥${order.total_price || 0}</div>
+                            <span class="order-status ${statusClass}">${statusText}</span>
+                            ${payButton}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 支付门票订单
         let currentPayOrderId = null;
         function payOrder(orderId, price) {
             currentPayOrderId = orderId;
@@ -836,7 +947,7 @@
             currentPayOrderId = null;
         }
 
-        // 确认支付
+        // 确认支付门票订单
         function confirmPayOrder() {
             if (!currentPayOrderId) return;
 
@@ -853,7 +964,7 @@
                 if (result.code === 1) {
                     alert('支付成功！');
                     closePayOrderModal();
-                    loadOrders(); // 刷新订单列表
+                    loadOrders();
                 } else {
                     alert(result.data || '支付失败');
                 }
@@ -864,7 +975,49 @@
             });
         }
 
-        // 获取状态样式
+        // 支付农特产订单
+        let currentPayAgriOrderNo = null;
+        function payAgriOrder(orderNo, price) {
+            currentPayAgriOrderNo = orderNo;
+            document.getElementById('payAgriOrderAmount').textContent = '¥' + (price || 0);
+            document.getElementById('payAgriOrderModal').style.display = 'flex';
+        }
+
+        // 关闭农特产支付弹窗
+        function closePayAgriOrderModal() {
+            document.getElementById('payAgriOrderModal').style.display = 'none';
+            currentPayAgriOrderNo = null;
+        }
+
+        // 确认支付农特产订单
+        function confirmPayAgriOrder() {
+            if (!currentPayAgriOrderNo) return;
+
+            fetch('/agri/order/confirm', {
+                method: 'POST',
+                headers: {
+                    'token': token,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `orderNo=${currentPayAgriOrderNo}`
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    alert('支付成功！');
+                    closePayAgriOrderModal();
+                    loadAgriOrders();
+                } else {
+                    alert(result.data || '支付失败');
+                }
+            })
+            .catch(error => {
+                console.error('支付失败:', error);
+                alert('支付失败，请稍后重试');
+            });
+        }
+
+        // 获取门票订单状态样式
         function getStatusClass(status) {
             switch(status) {
                 case 'pending': return 'status-unpaid';
@@ -875,7 +1028,7 @@
             }
         }
 
-        // 获取状态文本
+        // 获取门票订单状态文本
         function getStatusText(status) {
             switch(status) {
                 case 'pending': return '待支付';
@@ -886,17 +1039,73 @@
             }
         }
 
-        // 更新订单统计
+        // 获取农特产订单状态样式
+        function getAgriStatusClass(status) {
+            switch(status) {
+                case 'pending': return 'status-unpaid';
+                case 'confirmed': return 'status-paid';
+                case 'completed': return 'status-paid';
+                case 'cancelled': return 'status-cancelled';
+                default: return 'status-unpaid';
+            }
+        }
+
+        // 获取农特产订单状态文本
+        function getAgriStatusText(status) {
+            switch(status) {
+                case 'pending': return '待支付';
+                case 'confirmed': return '已确认';
+                case 'completed': return '已完成';
+                case 'cancelled': return '已取消';
+                default: return '未知';
+            }
+        }
+
+        // 更新门票订单统计
         function updateOrderStats(orders) {
             if (!orders) return;
-
             const total = orders.length;
             const unpaid = orders.filter(o => o.status === 'pending').length;
-            const completed = orders.filter(o => o.status === 'completed' || o.status === 'confirmed').length;
-
             document.getElementById('orderCount').textContent = total;
-            document.getElementById('unpaidCount').textContent = unpaid;
-            document.getElementById('completedCount').textContent = completed;
+            updateUnpaidCount();
+        }
+
+        // 更新农特产订单统计
+        function updateAgriOrderStats(orders) {
+            if (!orders) return;
+            const total = orders.length;
+            document.getElementById('agriOrderCount').textContent = total;
+            updateUnpaidCount();
+        }
+
+        // 更新待支付统计
+        function updateUnpaidCount() {
+            let unpaid = 0;
+            // 门票订单待支付
+            fetch('/order/list', {
+                headers: { 'token': token }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    const orders = JSON.parse(result.data);
+                    unpaid += orders.filter(o => o.status === 'pending').length;
+                    
+                    // 农特产订单待支付
+                    return fetch('/agri/order/list', {
+                        headers: { 'token': token }
+                    });
+                }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 1) {
+                    const orders = JSON.parse(result.data);
+                    unpaid += orders.filter(o => o.status === 'pending').length;
+                }
+                document.getElementById('unpaidCount').textContent = unpaid;
+            })
+            .catch(error => console.error('更新待支付统计失败:', error));
         }
 
         // 加载收藏数量
@@ -954,7 +1163,6 @@
                     return;
                 }
                 
-                // 获取每个景点的详情
                 const sitePromises = siteIds.map(siteId => 
                     fetch('/site/list1', {
                         method: 'POST',
@@ -1008,7 +1216,6 @@
             
             collectionList.innerHTML = `<div class="collection-grid">${collectionHTML}</div>`;
             
-            // 加载所有景点图片
             const images = collectionList.querySelectorAll('.collection-image');
             images.forEach(img => {
                 if (img.dataset.icon) {
@@ -1042,11 +1249,6 @@
         // 跳转到景点详情
         function goToSite(siteId) {
             window.location.href = `/site-detail.html?site_id=${siteId}`;
-        }
-
-        // 编辑资料
-        function editProfile() {
-            alert('编辑资料功能开发中...');
         }
 
         // 退出登录

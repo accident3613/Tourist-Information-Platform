@@ -3,14 +3,13 @@
     <div class="card-header">
         <h3 class="card-title">订单列表</h3>
         <div style="display: flex; gap: 10px;">
-            <select id="statusFilter" onchange="loadOrders()" style="padding: 8px 12px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: #16213e; color: #fff;">
-                <option value="" style="background: #16213e; color: #fff;">全部状态</option>
-                <option value="pending" style="background: #16213e; color: #fff;">待支付</option>
-                <option value="confirmed" style="background: #16213e; color: #fff;">已确认</option>
-                <option value="completed" style="background: #16213e; color: #fff;">已完成</option>
-                <option value="cancelled" style="background: #16213e; color: #fff;">已取消</option>
+            <select id="filterStatus" onchange="loadOrders()" style="padding: 8px 12px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: #16213e; color: #fff;">
+                <option value="">全部状态</option>
+                <option value="pending">待支付</option>
+                <option value="confirmed">已确认</option>
+                <option value="completed">已完成</option>
             </select>
-            <button class="btn btn-primary" onclick="exportOrders()">导出Excel</button>
+            <button class="btn" onclick="exportOrders()" style="background: rgba(255,255,255,0.1); color: #fff;">导出订单</button>
         </div>
     </div>
 
@@ -25,224 +24,235 @@
                 <th>操作</th>
             </tr>
         </thead>
-        <tbody id="ordersTable">
+        <tbody id="orderTableBody">
             <tr>
                 <td colspan="6" style="text-align: center; color: #888;">加载中...</td>
             </tr>
         </tbody>
     </table>
+
+    <div class="pagination" id="pagination" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+    </div>
 </div>
 
-<!-- 订单详情弹窗 -->
-<div id="orderModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
-    <div style="background: #1a1a2e; border-radius: 12px; padding: 30px; width: 90%; max-width: 600px; border: 1px solid rgba(255,255,255,0.1); max-height: 90vh; overflow-y: auto;">
-        <h3 style="color: #4CAF50; margin-bottom: 20px;">订单详情</h3>
-        <div id="orderDetailContent" style="color: #fff; line-height: 2;">
-            加载中...
-        </div>
+<div id="orderModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <h3 class="modal-title">订单详情</h3>
+        <div id="orderDetail" style="color: #fff; line-height: 2;"></div>
         <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button class="btn" onclick="closeOrderModal()" style="flex: 1; background: rgba(255,255,255,0.1); color: #fff;">关闭</button>
-            <button class="btn btn-primary" id="confirmBtn" onclick="confirmOrder()" style="flex: 1; display: none;">确认订单</button>
-            <button class="action-btn delete" id="cancelBtn" onclick="cancelOrder()" style="flex: 1; display: none; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;">取消订单</button>
+            <button class="btn" onclick="closeModal()" style="flex: 1; background: rgba(255,255,255,0.1); color: #fff;">关闭</button>
         </div>
     </div>
 </div>
 
 <script>
-(function() {
-    let allOrders = [];
-    let currentOrderId = null;
+var currentPage = 1;
+var pageSize = 10;
+var totalPages = 1;
+var total = 0;
+var allOrders = [];
 
-    window.ordersInit = function() {
-        loadOrders();
-    };
+window.ordersInit = function() {
+    loadOrders();
+};
 
-    window.loadOrders = function() {
-        const adminToken = localStorage.getItem('adminToken');
-        const status = document.getElementById('statusFilter').value;
-
-        fetch('/admin/orders', {
-            headers: { 'token': adminToken }
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.code === 1) {
-                allOrders = JSON.parse(result.data);
-                if (status) {
-                    allOrders = allOrders.filter(o => o.status === status);
-                }
-                renderOrders();
-            } else {
-                document.getElementById('ordersTable').innerHTML = '<tr><td colspan="6" style="text-align: center; color: #888;">暂无数据</td></tr>';
+function loadOrders() {
+    var adminToken = localStorage.getItem('adminToken');
+    var status = document.getElementById('filterStatus').value;
+    
+    fetch('/admin/orders?page=' + currentPage + '&pageSize=' + pageSize, {
+        headers: { 'token': adminToken }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.code === 1) {
+            var data = JSON.parse(result.data);
+            allOrders = data.list || [];
+            total = data.total || 0;
+            totalPages = data.totalPages || 1;
+            
+            var filteredOrders = allOrders;
+            if (status) {
+                filteredOrders = allOrders.filter(function(o) { return o.status === status; });
             }
-        })
-        .catch(() => {
-            document.getElementById('ordersTable').innerHTML = '<tr><td colspan="6" style="text-align: center; color: #888;">加载失败</td></tr>';
-        });
-    };
-
-    window.renderOrders = function() {
-        const tbody = document.getElementById('ordersTable');
-        if (allOrders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #888;">暂无订单</td></tr>';
-            return;
+            
+            renderOrders(filteredOrders);
+            renderPagination();
+        } else {
+            document.getElementById('orderTableBody').innerHTML = '<tr><td colspan="6" style="text-align: center; color: #888;">暂无数据</td></tr>';
         }
+    })
+    .catch(function() {
+        document.getElementById('orderTableBody').innerHTML = '<tr><td colspan="6" style="text-align: center; color: #888;">加载失败</td></tr>';
+    });
+}
 
-        tbody.innerHTML = allOrders.map(order => {
-            let statusClass, statusText;
-            switch(order.status) {
-                case 'pending':
-                    statusClass = 'status-inactive';
-                    statusText = '待支付';
-                    break;
-                case 'confirmed':
-                    statusClass = 'status-active';
-                    statusText = '已确认';
-                    break;
-                case 'completed':
-                    statusClass = 'status-active';
-                    statusText = '已完成';
-                    break;
-                case 'cancelled':
-                    statusClass = 'status-inactive';
-                    statusText = '已取消';
-                    break;
-                default:
-                    statusClass = 'status-inactive';
-                    statusText = '未知';
-            }
-            const date = new Date(order.created_at).toLocaleString('zh-CN');
-            return `
-                <tr>
-                    <td>${order.order_no || order.order_id}</td>
-                    <td>${order.username || '-'}</td>
-                    <td>¥${order.price || 0}</td>
-                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td>${date}</td>
-                    <td>
-                        <div class="action-btns">
-                            <button class="action-btn edit" onclick="viewOrder('${order.order_id}')">查看</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }).join('');
+function renderOrders(orders) {
+    var tbody = document.getElementById('orderTableBody');
+    
+    if (!orders || orders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #888;">暂无数据</td></tr>';
+        return;
+    }
+    
+    var html = orders.map(function(order) {
+        var statusClass = getStatusClass(order.status);
+        var statusText = getStatusText(order.status);
+        var date = order.created_at ? new Date(order.created_at).toLocaleString('zh-CN') : '-';
+        
+        var confirmBtn = order.status === 'pending' ? 
+            '<button class="action-btn edit" onclick="confirmOrder(\'' + order.order_id + '\')">确认</button>' : '';
+        
+        return '<tr>' +
+            '<td>' + (order.order_no || order.order_id) + '</td>' +
+            '<td>' + (order.username || '-') + '</td>' +
+            '<td>¥' + (order.price || 0) + '</td>' +
+            '<td><span class="status-badge ' + statusClass + '">' + statusText + '</span></td>' +
+            '<td>' + date + '</td>' +
+            '<td><div class="action-btns">' +
+                '<button class="action-btn edit" onclick="viewOrder(\'' + order.order_id + '\')">查看</button>' +
+                confirmBtn +
+            '</div></td>' +
+        '</tr>';
+    }).join('');
+    
+    tbody.innerHTML = html;
+}
+
+function renderPagination() {
+    var pagination = document.getElementById('pagination');
+    
+    if (totalPages <= 1) {
+        pagination.innerHTML = '<span style="color: #888;">共 ' + total + ' 条记录</span>';
+        return;
+    }
+    
+    var html = '<span style="color: #888;">共 ' + total + ' 条</span>';
+    html += '<button class="page-btn" onclick="goToPage(1)" ' + (currentPage === 1 ? 'disabled' : '') + '>首页</button>';
+    html += '<button class="page-btn" onclick="goToPage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>上一页</button>';
+    html += '<span style="color: #fff;">第 ' + currentPage + ' / ' + totalPages + ' 页</span>';
+    html += '<button class="page-btn" onclick="goToPage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>下一页</button>';
+    html += '<button class="page-btn" onclick="goToPage(' + totalPages + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>末页</button>';
+    
+    pagination.innerHTML = html;
+}
+
+function goToPage(page) {
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    loadOrders();
+}
+
+function getStatusClass(status) {
+    var classes = {
+        'completed': 'status-active',
+        'confirmed': 'status-active',
+        'pending': 'status-inactive'
     };
+    return classes[status] || 'status-inactive';
+}
 
-    window.viewOrder = function(orderId) {
-        currentOrderId = orderId;
-        const order = allOrders.find(o => o.order_id === orderId);
-        if (!order) return;
+function getStatusText(status) {
+    var texts = {
+        'completed': '已完成',
+        'confirmed': '已确认',
+        'pending': '待支付'
+    };
+    return texts[status] || '未知';
+}
 
-        let statusText;
-        switch(order.status) {
-            case 'pending': statusText = '待支付'; break;
-            case 'confirmed': statusText = '已确认'; break;
-            case 'completed': statusText = '已完成'; break;
-            case 'cancelled': statusText = '已取消'; break;
-            default: statusText = '未知';
+function viewOrder(orderId) {
+    var adminToken = localStorage.getItem('adminToken');
+    fetch('/order/detail?orderId=' + orderId, {
+        headers: { 'token': adminToken }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.code === 1) {
+            var order = JSON.parse(result.data);
+            var detail = '<p><strong>订单号：</strong>' + (order.order_no || order.order_id) + '</p>' +
+                         '<p><strong>用户：</strong>' + (order.username || '-') + '</p>' +
+                         '<p><strong>金额：</strong>¥' + (order.price || 0) + '</p>' +
+                         '<p><strong>状态：</strong>' + getStatusText(order.status) + '</p>' +
+                         '<p><strong>创建时间：</strong>' + (order.created_at ? new Date(order.created_at).toLocaleString('zh-CN') : '-') + '</p>';
+            document.getElementById('orderDetail').innerHTML = detail;
+            document.getElementById('orderModal').style.display = 'flex';
+        } else {
+            alert(result.data || '获取订单详情失败');
         }
+    })
+    .catch(function() {
+        alert('获取订单详情失败');
+    });
+}
 
-        document.getElementById('orderDetailContent').innerHTML = `
-            <p><strong>订单号：</strong>${order.order_no || order.order_id}</p>
-            <p><strong>用户：</strong>${order.username || '-'}</p>
-            <p><strong>订单金额：</strong>¥${order.price || 0}</p>
-            <p><strong>订单状态：</strong>${statusText}</p>
-            <p><strong>支付方式：</strong>${order.payment_method || '未支付'}</p>
-            <p><strong>创建时间：</strong>${new Date(order.created_at).toLocaleString('zh-CN')}</p>
-            <p><strong>支付时间：</strong>${order.payment_time ? new Date(order.payment_time).toLocaleString('zh-CN') : '-'}</p>
-        `;
+function closeModal() {
+    document.getElementById('orderModal').style.display = 'none';
+}
 
-        document.getElementById('confirmBtn').style.display = order.status === 'pending' ? 'block' : 'none';
-        document.getElementById('cancelBtn').style.display = order.status === 'pending' || order.status === 'confirmed' ? 'block' : 'none';
+function confirmOrder(orderId) {
+    if (!confirm('确定要确认订单 ' + orderId + ' 吗？')) return;
+    
+    var adminToken = localStorage.getItem('adminToken');
+    fetch('/order/confirm', {
+        method: 'POST',
+        headers: {
+            'token': adminToken,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'orderId=' + orderId
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.code === 1) {
+            alert('确认成功');
+            loadOrders();
+        } else {
+            alert(result.data || '确认失败');
+        }
+    })
+    .catch(function() {
+        alert('确认失败');
+    });
+}
 
-        document.getElementById('orderModal').style.display = 'flex';
-    };
-
-    window.closeOrderModal = function() {
-        document.getElementById('orderModal').style.display = 'none';
-        currentOrderId = null;
-    };
-
-    window.confirmOrder = function() {
-        if (!currentOrderId) return;
-
-        const adminToken = localStorage.getItem('adminToken');
-        fetch('/order/confirm', {
-            method: 'POST',
-            headers: {
-                'token': adminToken,
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `orderId=${currentOrderId}`
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.code === 1) {
-                alert('订单确认成功');
-                closeOrderModal();
-                loadOrders();
-            } else {
-                alert(result.data || '确认失败');
-            }
-        })
-        .catch(() => alert('确认失败'));
-    };
-
-    window.cancelOrder = function() {
-        if (!currentOrderId) return;
-        if (!confirm('确定要取消该订单吗？')) return;
-
-        const adminToken = localStorage.getItem('adminToken');
-        fetch('/order/cancel', {
-            method: 'POST',
-            headers: {
-                'token': adminToken,
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `orderId=${currentOrderId}`
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.code === 1) {
-                alert('订单取消成功');
-                closeOrderModal();
-                loadOrders();
-            } else {
-                alert(result.data || '取消失败');
-            }
-        })
-        .catch(() => alert('取消失败'));
-    };
-
-    window.exportOrders = function() {
-        const status = document.getElementById('statusFilter').value;
-        const adminToken = localStorage.getItem('adminToken');
-        
-        const url = '/admin/excel/export/orders' + (status ? '?status=' + status : '');
-        
-        fetch(url, {
-            headers: { 'token': adminToken }
-        })
-        .then(response => {
-            if (response.status === 401) {
-                throw new Error('请先登录');
-            }
-            return response.blob();
-        })
-        .then(blob => {
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            a.download = 'orders_' + new Date().getTime() + '.csv';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(downloadUrl);
-        })
-        .catch(error => {
-            alert(error.message || '导出失败');
-        });
-    };
-})();
+function exportOrders() {
+    var adminToken = localStorage.getItem('adminToken');
+    fetch('/admin/orders/export', {
+        headers: { 'token': adminToken }
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'orders_' + new Date().toISOString().slice(0, 10) + '.csv';
+        link.click();
+        URL.revokeObjectURL(link.href);
+    })
+    .catch(function() {
+        alert('导出失败');
+    });
+}
 </script>
+
+<style>
+.page-btn {
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: rgba(76, 175, 80, 0.2);
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+</style>

@@ -17,7 +17,7 @@ public interface UsrMap {
 @Insert("INSERT INTO user (username, password) VALUES (#{username}, #{password})")
     int regmap(String username, String password);  //注册
 
-    @Select("SELECT IFNULL(status, 0) FROM user WHERE username = #{username}")
+    @Select("SELECT COALESCE((SELECT status FROM user WHERE username = #{username}), 0)")
     int chkmap(String username);  //检查登录状态
 @Select("SELECT * FROM user WHERE username = #{username}")
     User prfmap(String username);  //获取用户信息

@@ -368,6 +368,9 @@
             <a href="#" class="nav-item" onclick="showPage('tickets', this)">
                  门票管理
             </a>
+            <a href="#" class="nav-item" onclick="showPage('activities', this)">
+                 活动管理
+            </a>
             <a href="#" class="nav-item" onclick="showPage('orders', this)">
                 订单管理
             </a>
@@ -457,6 +460,7 @@
                 'users': '用户管理',
                 'sites': '景点管理',
                 'tickets': '门票管理',
+                'activities': '活动管理',
                 'orders': '订单管理',
                 'admins': '管理员设置',
                 'stats': '数据分析'
@@ -476,7 +480,10 @@
                 const scripts = contentArea.querySelectorAll('script');
                 scripts.forEach(script => {
                     try {
-                        eval(script.textContent);
+                        const newScript = document.createElement('script');
+                        newScript.textContent = script.textContent;
+                        document.head.appendChild(newScript);
+                        document.head.removeChild(newScript);
                     } catch(e) {
                         console.error('Script error:', e);
                     }

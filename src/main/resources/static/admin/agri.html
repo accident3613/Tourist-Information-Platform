@@ -17,8 +17,8 @@
                 <th>ID</th>
                 <th>景点</th>
                 <th>产品名称</th>
-                <th>价格(元/斤)</th>
-                <th>库存(斤)</th>
+                <th>价格 (元/斤)</th>
+                <th>库存 (斤)</th>
                 <th>销量</th>
                 <th>评分</th>
                 <th>状态</th>
@@ -31,6 +31,9 @@
             </tr>
         </tbody>
     </table>
+
+    <div class="pagination" id="pagination" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+    </div>
 </div>
 
 <!-- 新增/编辑农特产模态框 -->
@@ -78,6 +81,12 @@
 </div>
 
 <script>
+var currentPage = 1;
+var pageSize = 10;
+var totalPages = 1;
+var total = 0;
+var allProducts = [];
+
 (function() {
     let editingAgriId = null;
     let sites = [];
@@ -115,8 +124,8 @@
         const adminToken = localStorage.getItem('adminToken');
         const siteId = document.getElementById('siteFilter').value;
 
-        let url = '/admin/agri/list';
-        if (siteId) url += '?siteId=' + siteId;
+        let url = '/admin/agri/list?page=' + currentPage + '&pageSize=' + pageSize;
+        if (siteId) url += '&siteId=' + siteId;
 
         fetch(url, {
             headers: { 'token': adminToken }
@@ -124,18 +133,46 @@
         .then(response => response.json())
         .then(result => {
             if (result.code === 1) {
-                let products = result.data;
-                if (typeof products === 'string') {
-                    products = JSON.parse(products);
-                }
-                renderAgriProducts(products);
+                var data = JSON.parse(result.data);
+                allProducts = data.list || [];
+                total = data.total || 0;
+                totalPages = data.totalPages || 1;
+                
+                renderAgriProducts(allProducts);
+                renderPagination();
             } else {
                 document.getElementById('agriTable').innerHTML = '<tr><td colspan="9" style="text-align: center; color: #888;">暂无数据</td></tr>';
+                document.getElementById('pagination').innerHTML = '';
             }
         })
         .catch(() => {
             document.getElementById('agriTable').innerHTML = '<tr><td colspan="9" style="text-align: center; color: #888;">加载失败</td></tr>';
+            document.getElementById('pagination').innerHTML = '';
         });
+    };
+
+    function renderPagination() {
+        var pagination = document.getElementById('pagination');
+        
+        if (totalPages <= 1) {
+            pagination.innerHTML = '<span style="color: #888;">共 ' + total + ' 条记录</span>';
+            return;
+        }
+        
+        var html = '<span style="color: #888;">共 ' + total + ' 条</span>';
+        html += '<button class="page-btn" onclick="goToPage(1)" ' + (currentPage === 1 ? 'disabled' : '') + '>首页</button>';
+        html += '<button class="page-btn" onclick="goToPage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>上一页</button>';
+        html += '<span style="color: #fff;">第 ' + currentPage + ' / ' + totalPages + ' 页</span>';
+        html += '<button class="page-btn" onclick="goToPage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>下一页</button>';
+        html += '<button class="page-btn" onclick="goToPage(' + totalPages + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>末页</button>';
+        
+        pagination.innerHTML = html;
+    }
+
+    window.goToPage = function(page) {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        loadAgriProducts();
     };
 
     function renderAgriProducts(products) {
@@ -334,3 +371,25 @@
     };
 })();
 </script>
+
+<style>
+.page-btn {
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: rgba(76, 175, 80, 0.2);
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+</style>

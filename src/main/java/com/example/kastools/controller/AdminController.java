@@ -151,11 +151,11 @@ public class AdminController {
     }
 
     @GetMapping("/orders")
-    public Result getAllOrders() {
+    public Result getAllOrders(@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "10") int pageSize) {
         Result result = new Result();
-        List<Map<String, Object>> orders = orderService.getAllOrders();
+        Map<String, Object> data = orderService.getAllOrdersWithPaging(page, pageSize);
         result.setCode(1);
-        result.setData(JSON.toJSONString(orders));
+        result.setData(JSON.toJSONString(data));
         return result;
     }
 
